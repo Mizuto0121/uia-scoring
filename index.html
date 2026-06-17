@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>未破裂脳動脈瘤 スコアリング</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+  header {
+    background: #2b6cb0;
+    color: white;
+    padding: 14px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 17px; font-weight: 700; }
+  header p { font-size: 11px; opacity: 0.8; margin-top: 3px; }
+  /* UIATS dual-column badge */
+  .uiats-badge {
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .uiats-cols {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .uiats-col {
+    flex: 1;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .uiats-col-t { background: #ebf4ff; }
+  .uiats-col-c { background: #fff5f5; }
+  .uiats-col-label { font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+  .uiats-col-t .uiats-col-label { color: #2b6cb0; }
+  .uiats-col-c .uiats-col-label { color: #c53030; }
+  .uiats-col-num { font-size: 36px; font-weight: 700; line-height: 1; }
+  .uiats-col-t .uiats-col-num { color: #2b6cb0; }
+  .uiats-col-c .uiats-col-num { color: #c53030; }
+  .uiats-result {
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .uiats-treat   { background: #ebf4ff; color: #2b6cb0; }
+  .uiats-conserv { background: #fff5f5; color: #c53030; }
+  .uiats-inconc  { background: #fffbeb; color: #744210; }
+  .uiats-result-sub { font-size: 11px; font-weight: 400; margin-top: 3px; }
+  /* UIATS section colors */
+  .section-header.tx { background: #ebf4ff; color: #2c5282; }
+  .section-pts.tx    { background: #2b6cb0; }
+  .section-header.cx { background: #fff5f5; color: #c53030; }
+  .section-pts.cx    { background: #c53030; }
+  .opt-btn.selected.tx-sel { border-color:#2b6cb0; background:#ebf4ff; color:#2c5282; }
+  .opt-btn.selected.tx-sel .opt-pts { color:#2b6cb0; }
+  .opt-btn.selected.cx-sel { border-color:#c53030; background:#fff5f5; color:#9b2c2c; }
+  .opt-btn.selected.cx-sel .opt-pts { color:#c53030; }
+  .always-tag { font-size:10px; background:#718096; color:white; border-radius:4px; padding:1px 6px; margin-left:6px; }
+
+  .tabs {
+    display: flex;
+    background: #1a4a8a;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 4px;
+    text-align: center;
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+  .tab.active {
+    color: white;
+    border-bottom-color: #63b3ed;
+    background: rgba(255,255,255,0.1);
+  }
+  .tab span { font-size: 9px; font-weight: 400; display: block; }
+
+  .panel { display: none; padding: 14px; }
+  .panel.active { display: block; }
+
+  /* Result badge */
+  .score-badge {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .score-num {
+    font-size: 52px;
+    font-weight: 700;
+    color: #2b6cb0;
+    line-height: 1;
+  }
+  .score-label { font-size: 11px; color: #718096; margin-bottom: 2px; }
+  .risk-display { text-align: right; }
+  .risk-pct { font-size: 30px; font-weight: 700; line-height: 1; }
+  .risk-low  { color: #38a169; }
+  .risk-mid  { color: #d69e2e; }
+  .risk-high { color: #e53e3e; }
+  .risk-vhigh{ color: #9b2335; }
+  .risk-label-sm { font-size: 10px; color: #718096; margin-top: 2px; }
+  .risk-interp { font-size: 11px; color: #4a5568; margin-top: 4px; max-width: 160px; text-align: right; }
+
+  /* UCAS special badge */
+  .ucas-badge {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .ucas-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ucas-rate {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .ucas-breakdown {
+    font-size: 11px;
+    color: #718096;
+    margin-top: 8px;
+    line-height: 1.6;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 8px;
+  }
+
+  /* Sections */
+  .section {
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  .section-header {
+    background: #ebf4ff;
+    padding: 9px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2c5282;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-pts {
+    font-size: 11px;
+    background: #2b6cb0;
+    color: white;
+    border-radius: 20px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
+  .section-header.ucas-green { background: #f0fff4; color: #276749; }
+  .section-pts.ucas-green { background: #276749; }
+
+  .options {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .opt-btn {
+    width: 100%;
+    padding: 9px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    text-align: left;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+    color: #2d3748;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected {
+    border-color: #2b6cb0;
+    background: #ebf4ff;
+    color: #2c5282;
+    font-weight: 600;
+  }
+  .opt-btn.selected.ucas-sel {
+    border-color: #276749;
+    background: #f0fff4;
+    color: #276749;
+  }
+  .opt-pts {
+    font-size: 11px;
+    font-weight: 700;
+    color: #a0aec0;
+    min-width: 40px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .opt-btn.selected .opt-pts { color: #2b6cb0; }
+  .opt-btn.selected.ucas-sel .opt-pts { color: #276749; }
+
+  .reset-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .reset-btn:active { opacity: 0.8; }
+
+  .ref {
+    text-align: center;
+    font-size: 10px;
+    color: #a0aec0;
+    margin-top: 6px;
+    padding-bottom: 20px;
+  }
+  .note-box {
+    background: #fffbeb;
+    border-left: 3px solid #d69e2e;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #744210;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>未破裂脳動脈瘤 スコアリング</h1>
+  <p>PHASES・ELAPSS・UCAS</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('phases')">PHASES<span>破裂リスク</span></div>
+  <div class="tab" onclick="switchTab('elapss')">ELAPSS<span>増大リスク</span></div>
+  <div class="tab" onclick="switchTab('ucas')">UCAS<span>破裂率推定</span></div>
+  <div class="tab" onclick="switchTab('uiats')">UIATS<span>治療判断</span></div>
+</div>
+
+<!-- ========== PHASES Panel ========== -->
+<div class="panel active" id="panel-phases">
+  <div class="score-badge">
+    <div>
+      <div class="score-label">PHASES スコア</div>
+      <div class="score-num" id="phases-score">0</div>
+    </div>
+    <div class="risk-display">
+      <div class="risk-pct risk-low" id="phases-risk">0.4%</div>
+      <div class="risk-label-sm">5年破裂リスク</div>
+      <div class="risk-interp" id="phases-interp">低リスク</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">P — Population（出身地域）<span class="section-pts" id="p-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('P',0,this)">北米・欧州（フィンランド除く）<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('P',3,this)">日本<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="selectOpt('P',5,this)">フィンランド<span class="opt-pts">+5</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">H — Hypertension（高血圧）<span class="section-pts" id="h-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('H',0,this)">なし<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('H',1,this)">あり<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">A — Age（年齢）<span class="section-pts" id="a-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('A',0,this)">70歳未満<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('A',1,this)">70歳以上<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">S — Size（動脈瘤径）<span class="section-pts" id="s1-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('S1',0,this)">&lt; 7.0 mm<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('S1',3,this)">7.0 〜 9.9 mm<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="selectOpt('S1',6,this)">10.0 〜 19.9 mm<span class="opt-pts">+6</span></button>
+      <button class="opt-btn" onclick="selectOpt('S1',10,this)">≥ 20.0 mm<span class="opt-pts">+10</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">E — Earlier SAH（既往SAH）<span class="section-pts" id="e-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('E',0,this)">なし<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('E',1,this)">あり（他の動脈瘤から）<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">S — Site（部位）<span class="section-pts" id="s2-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectOpt('S2',0,this)">ICA（内頸動脈）<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectOpt('S2',2,this)">MCA（中大脳動脈）<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="selectOpt('S2',2,this)">AcomA / ACA（前交通・前大脳）<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="selectOpt('S2',4,this)">後方循環（BA・VA・PCA 等）<span class="opt-pts">+4</span></button>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetPhases()">リセット</button>
+  <div class="ref">Greving et al., Stroke 2014</div>
+</div>
+
+<!-- ========== ELAPSS Panel ========== -->
+<div class="panel" id="panel-elapss">
+  <div class="score-badge">
+    <div>
+      <div class="score-label">ELAPSS スコア</div>
+      <div class="score-num" id="elapss-score">0</div>
+    </div>
+    <div class="risk-display">
+      <div class="risk-pct risk-low" id="elapss-risk">〜3%</div>
+      <div class="risk-label-sm">3年増大リスク</div>
+      <div class="risk-interp" id="elapss-interp">低リスク — 通常間隔で経過観察</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">E — Earlier SAH（既往SAH）<span class="section-pts" id="ee-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('EE',0,this)">なし<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EE',3,this)">あり（他の動脈瘤から）<span class="opt-pts">+3</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">L — Location（部位）<span class="section-pts" id="el-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('EL',0,this)">その他（MCA・AcomA・ACA 等）<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EL',2,this)">後方循環 または ICA-PC<span class="opt-pts">+2</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">A — Age（年齢）<span class="section-pts" id="ea-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('EA',0,this)">45歳未満<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EA',2,this)">45〜59歳<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EA',3,this)">60〜74歳<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EA',4,this)">75歳以上<span class="opt-pts">+4</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">P — Population（出身地域）<span class="section-pts" id="ep-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('EP',0,this)">その他<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EP',2,this)">フィンランド<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="selectEOpt('EP',3,this)">日本<span class="opt-pts">+3</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">S — Size（動脈瘤径）<span class="section-pts" id="es-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('ES',0,this)">&lt; 7.0 mm<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('ES',3,this)">7.0 〜 9.9 mm<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="selectEOpt('ES',8,this)">≥ 10.0 mm<span class="opt-pts">+8</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">S — Shape（形状）<span class="section-pts" id="esh-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn selected" onclick="selectEOpt('ESH',0,this)">整形（smooth / regular）<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="selectEOpt('ESH',3,this)">不整形 / daughter sac あり<span class="opt-pts">+3</span></button>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetElapss()">リセット</button>
+  <div class="ref">Backes et al., BMJ 2017</div>
+</div>
+
+<!-- ========== UCAS Panel ========== -->
+<div class="panel" id="panel-ucas">
+  <div class="note-box">
+    UCASはスコア加算方式ではなく、サイズ別年間破裂率に部位・形状のHRを乗じて推定します。<br>
+    <b>日本人コホート（NEJM 2012）</b>のデータを使用。
+  </div>
+
+  <div class="ucas-badge">
+    <div class="ucas-badge-row">
+      <div>
+        <div class="score-label">推定年間破裂率</div>
+        <div class="ucas-rate risk-low" id="ucas-rate">0.36%</div>
+        <div class="risk-label-sm">/year</div>
+      </div>
+      <div class="risk-display">
+        <div class="risk-pct" id="ucas-risk-pct" style="font-size:20px;color:#38a169;">低リスク</div>
+        <div class="risk-interp" id="ucas-interp" style="max-width:140px;">通常経過観察</div>
+      </div>
+    </div>
+    <div class="ucas-breakdown" id="ucas-breakdown">
+      基準年間破裂率：0.36%/y × 部位HR：×1.0 × 形状HR：×1.0 = <b>0.36%/y</b>
+    </div>
+  </div>
+
+  <!-- Size -->
+  <div class="section">
+    <div class="section-header ucas-green">サイズ別 基準年間破裂率<span class="section-pts ucas-green" id="ucas-size-label">3〜4 mm</span></div>
+    <div class="options">
+      <button class="opt-btn selected ucas-sel" onclick="selectUOpt('size',0.36,'3〜4 mm',this)">3〜4 mm<span class="opt-pts">0.36%/y</span></button>
+      <button class="opt-btn" onclick="selectUOpt('size',0.50,'5〜6 mm',this)">5〜6 mm<span class="opt-pts">0.50%/y</span></button>
+      <button class="opt-btn" onclick="selectUOpt('size',1.69,'7〜9 mm',this)">7〜9 mm<span class="opt-pts">1.69%/y</span></button>
+      <button class="opt-btn" onclick="selectUOpt('size',4.11,'10〜24 mm',this)">10〜24 mm<span class="opt-pts">4.11%/y</span></button>
+      <button class="opt-btn" onclick="selectUOpt('size',33.4,'≥25 mm',this)">≥25 mm<span class="opt-pts">33.4%/y</span></button>
+    </div>
+  </div>
+
+  <!-- Location HR -->
+  <div class="section">
+    <div class="section-header ucas-green">部位（Hazard Ratio）<span class="section-pts ucas-green" id="ucas-loc-label">×1.0</span></div>
+    <div class="options">
+      <button class="opt-btn selected ucas-sel" onclick="selectUOpt('loc',1.0,'ICA / MCA / ACA / AcomA',this)">ICA / MCA / ACA / AcomA<span class="opt-pts">HR ×1.0</span></button>
+      <button class="opt-btn" onclick="selectUOpt('loc',1.90,'ICA-PC（後交通動脈起始部）',this)">ICA-PC（後交通動脈起始部）<span class="opt-pts">HR ×1.90</span></button>
+      <button class="opt-btn" onclick="selectUOpt('loc',1.90,'脳底動脈先端部（Basilar tip）',this)">脳底動脈先端部（Basilar tip）<span class="opt-pts">HR ×1.90</span></button>
+      <button class="opt-btn" onclick="selectUOpt('loc',1.35,'その他の後方循環',this)">その他の後方循環（VA・PICA 等）<span class="opt-pts">HR ×1.35</span></button>
+    </div>
+  </div>
+
+  <!-- Shape HR -->
+  <div class="section">
+    <div class="section-header ucas-green">形状（Hazard Ratio）<span class="section-pts ucas-green" id="ucas-shape-label">×1.0</span></div>
+    <div class="options">
+      <button class="opt-btn selected ucas-sel" onclick="selectUOpt('shape',1.0,'整形（smooth）',this)">整形（smooth）— daughter sac なし<span class="opt-pts">HR ×1.0</span></button>
+      <button class="opt-btn" onclick="selectUOpt('shape',1.63,'不整形 / daughter sac あり',this)">不整形 / daughter sac あり<span class="opt-pts">HR ×1.63</span></button>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetUcas()">リセット</button>
+  <div class="ref">Morita et al., N Engl J Med 2012（UCAS Japan）</div>
+</div>
+
+<!-- ========== UIATS Panel ========== -->
+<div class="panel" id="panel-uiats">
+  <div class="note-box">
+    治療側と保存側のポイントを<b>別々に集計</b>し比較します。<br>
+    差≥3 → 多い側を推奨 ／ 差≤2 → Inconclusive（個別判断）<br>
+    保存側には<b>常時 +5（処置リスク）</b>が自動加算されます。
+  </div>
+
+  <!-- Result badge -->
+  <div class="uiats-badge">
+    <div class="uiats-cols">
+      <div class="uiats-col uiats-col-t">
+        <div class="uiats-col-label">治療側ポイント</div>
+        <div class="uiats-col-num" id="uiats-t">0</div>
+      </div>
+      <div class="uiats-col uiats-col-c">
+        <div class="uiats-col-label">保存側ポイント（+5含む）</div>
+        <div class="uiats-col-num" id="uiats-c">5</div>
+      </div>
+    </div>
+    <div class="uiats-result uiats-inconc" id="uiats-result">
+      <span>判断保留（Inconclusive）</span>
+      <div class="uiats-result-sub" id="uiats-result-sub">治療側 +0 vs 保存側 +5（差 -5）</div>
+    </div>
+  </div>
+
+  <!-- ===== 治療側 ===== -->
+  <div style="font-size:12px;font-weight:700;color:#2b6cb0;margin:10px 0 6px;padding-left:4px;">▶ 治療に有利な因子</div>
+
+  <div class="section">
+    <div class="section-header tx">年齢（治療側）<span class="section-pts tx" id="ut-age-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsT('age',4,this)">40歳未満<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('age',3,this)">40〜60歳<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('age',2,this)">61〜70歳<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('age',1,this)">71〜80歳<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('age',0,this)">80歳超<span class="opt-pts">+0</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">既往・リスク因子<span class="section-pts tx" id="ut-risk-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsTCheck('sah',4,this)">他の動脈瘤からの既往SAH<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('family',3,this)">家族歴（動脈瘤・SAH）<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('smoking',3,this)">現喫煙<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('ethnic',2,this)">日本人・フィンランド人・イヌイット<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('htn',2,this)">高血圧<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('adpkd',2,this)">多発性嚢胞腎（ADPKD）<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('drug',2,this)">薬物乱用<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('alcohol',1,this)">アルコール乱用<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">臨床症状（動脈瘤関連）<span class="section-pts tx" id="ut-sym-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsTCheck('cn',4,this)">脳神経麻痺<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('mass',4,this)">mass effect（臨床・画像）<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('emboli',3,this)">血栓塞栓症状<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('epilepsy',1,this)">てんかん発作<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">動脈瘤サイズ（治療側）<span class="section-pts tx" id="ut-size-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsT('size',0,this)">≤ 3.9 mm<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('size',1,this)">4.0〜6.9 mm<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('size',2,this)">7.0〜12.9 mm<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('size',3,this)">13.0〜24.9 mm<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('size',4,this)">≥ 25 mm<span class="opt-pts">+4</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">動脈瘤形態<span class="section-pts tx" id="ut-morph-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsTCheck('irreg',3,this)">不整形・lobulation<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('ratio',1,this)">Size ratio &gt;3 または Aspect ratio &gt;1.6<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">部位<span class="section-pts tx" id="ut-loc-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsT('loc',5,this)">脳底動脈先端部（BA bifurcation）<span class="opt-pts">+5</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('loc',4,this)">椎骨・脳底動脈（VA/BA）<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('loc',2,this)">AComA または PComA<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsT('loc',0,this)">その他（MCA・ICA 等）<span class="opt-pts">+0</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header tx">その他（治療側）<span class="section-pts tx" id="ut-other-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsTCheck('growth',4,this)">経過観察中に増大<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('denovo',3,this)">経過中にde novo形成<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('qol',2,this)">破裂恐怖によるQOL低下<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('multi',1,this)">多発動脈瘤<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsTCheck('contralat',1,this)">対側の狭窄/閉塞性病変<span class="opt-pts">+1</span></button>
+    </div>
+  </div>
+
+  <!-- ===== 保存側 ===== -->
+  <div style="font-size:12px;font-weight:700;color:#c53030;margin:14px 0 6px;padding-left:4px;">▶ 保存的管理に有利な因子</div>
+
+  <div class="section">
+    <div class="section-header cx">処置リスク（常時加算）<span class="section-pts cx">+5（固定）</span></div>
+    <div style="padding:10px 14px;font-size:12px;color:#718096;">
+      すべての処置に伴う一定リスクとして、保存側に常に<b>+5点</b>が自動加算されます。
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header cx">年齢（保存側）<span class="section-pts cx" id="uc-age-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsC('age_c',0,this)">40歳未満<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('age_c',1,this)">40〜60歳<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('age_c',3,this)">61〜70歳<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('age_c',4,this)">71〜80歳<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('age_c',5,this)">80歳超<span class="opt-pts">+5</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header cx">動脈瘤サイズ（保存側）<span class="section-pts cx" id="uc-size-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsC('size_c',0,this)">&lt; 6.0 mm<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('size_c',1,this)">6.0〜10.0 mm<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('size_c',3,this)">10.1〜20.0 mm<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('size_c',5,this)">&gt; 20.0 mm<span class="opt-pts">+5</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header cx">余命・併存疾患<span class="section-pts cx" id="uc-comor-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsC('lifeexp',4,this)">余命 &lt; 5年（悪性疾患等）<span class="opt-pts">+4</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('lifeexp',3,this)">余命 5〜10年<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('lifeexp',1,this)">余命 &gt; 10年<span class="opt-pts">+1</span></button>
+      <button class="opt-btn" onclick="toggleUiatsCCheck('neuro',3,this)">神経認知障害<span class="opt-pts">+3</span></button>
+      <button class="opt-btn" onclick="toggleUiatsCCheck('coag',2,this)">凝固障害・血栓性疾患<span class="opt-pts">+2</span></button>
+      <button class="opt-btn" onclick="toggleUiatsCCheck('psych',2,this)">精神疾患<span class="opt-pts">+2</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header cx">動脈瘤の解剖学的複雑性<span class="section-pts cx" id="uc-complex-pts">0点</span></div>
+    <div class="options">
+      <button class="opt-btn" onclick="toggleUiatsC('complex',0,this)">低（治療難度が低い）<span class="opt-pts">+0</span></button>
+      <button class="opt-btn" onclick="toggleUiatsC('complex',3,this)">高（幅広ネック・紡錘状・巨大等）<span class="opt-pts">+3</span></button>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetUiats()">リセット</button>
+  <div class="ref">Etminan et al., Neurology 2015（69施設 Delphi コンセンサス）</div>
+</div>
+
+<script>
+// ========== PHASES ==========
+const phasesVals = { P:0, H:0, A:0, S1:0, E:0, S2:0 };
+const phasesPtsIds = { P:'p-pts', H:'h-pts', A:'a-pts', S1:'s1-pts', E:'e-pts', S2:'s2-pts' };
+const phasesRiskTable = {
+  0:'0.4%',1:'0.5%',2:'0.6%',3:'0.8%',4:'1.1%',
+  5:'1.4%',6:'1.9%',7:'2.5%',8:'3.3%',9:'4.3%',
+  10:'5.5%',11:'7.2%',12:'9.4%'
+};
+
+function selectOpt(key, val, btn) {
+  btn.closest('.options').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  phasesVals[key] = val;
+  updatePhases();
+}
+
+function updatePhases() {
+  const total = Object.values(phasesVals).reduce((a,b)=>a+b,0);
+  document.getElementById('phases-score').textContent = total;
+  for (const [k,v] of Object.entries(phasesVals)) {
+    const el = document.getElementById(phasesPtsIds[k]);
+    if (el) el.textContent = v + '点';
+  }
+  const riskPct = total >= 13 ? '≥12.4%' : (phasesRiskTable[total] || '0.4%');
+  const riskEl = document.getElementById('phases-risk');
+  const interpEl = document.getElementById('phases-interp');
+  riskEl.textContent = riskPct;
+  riskEl.className = 'risk-pct';
+  if (total <= 3)       { riskEl.classList.add('risk-low');   interpEl.textContent = '低リスク'; }
+  else if (total <= 6)  { riskEl.classList.add('risk-mid');   interpEl.textContent = '中リスク'; }
+  else if (total <= 10) { riskEl.classList.add('risk-high');  interpEl.textContent = '高リスク — 治療を積極的に検討'; }
+  else                  { riskEl.classList.add('risk-vhigh'); interpEl.textContent = '非常に高リスク — 治療を強く推奨'; }
+}
+
+function resetPhases() {
+  Object.keys(phasesVals).forEach(k => phasesVals[k] = 0);
+  document.querySelectorAll('#panel-phases .opt-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#panel-phases .options').forEach(opts => {
+    opts.querySelector('.opt-btn')?.classList.add('selected');
+  });
+  updatePhases();
+}
+
+// ========== ELAPSS ==========
+const elapssVals = { EE:0, EL:0, EA:0, EP:0, ES:0, ESH:0 };
+const elapssIds = { EE:'ee-pts', EL:'el-pts', EA:'ea-pts', EP:'ep-pts', ES:'es-pts', ESH:'esh-pts' };
+
+function selectEOpt(key, val, btn) {
+  btn.closest('.options').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  elapssVals[key] = val;
+  updateElapss();
+}
+
+function updateElapss() {
+  const total = Object.values(elapssVals).reduce((a,b)=>a+b,0);
+  document.getElementById('elapss-score').textContent = total;
+  for (const [k,v] of Object.entries(elapssVals)) {
+    const el = document.getElementById(elapssIds[k]);
+    if (el) el.textContent = v + '点';
+  }
+  const riskEl = document.getElementById('elapss-risk');
+  const interpEl = document.getElementById('elapss-interp');
+  riskEl.className = 'risk-pct';
+  let riskStr, riskClass, interp;
+  if (total <= 4)       { riskStr='〜3%';  riskClass='risk-low';   interp='低リスク — 通常間隔で経過観察'; }
+  else if (total <= 8)  { riskStr='〜8%';  riskClass='risk-mid';   interp='中リスク — やや短い間隔で経過観察'; }
+  else if (total <= 12) { riskStr='〜18%'; riskClass='risk-high';  interp='高リスク — 短い間隔 / 治療検討'; }
+  else                  { riskStr='≥25%';  riskClass='risk-vhigh'; interp='非常に高リスク — 治療を強く検討'; }
+  riskEl.textContent = riskStr;
+  riskEl.classList.add(riskClass);
+  interpEl.textContent = interp;
+}
+
+function resetElapss() {
+  Object.keys(elapssVals).forEach(k => elapssVals[k] = 0);
+  document.querySelectorAll('#panel-elapss .opt-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#panel-elapss .options').forEach(opts => {
+    opts.querySelector('.opt-btn')?.classList.add('selected');
+  });
+  updateElapss();
+}
+
+// ========== UCAS ==========
+const ucasState = {
+  size: 0.36, sizeLabel: '3〜4 mm',
+  loc: 1.0,   locLabel: 'ICA / MCA / ACA / AcomA',
+  shape: 1.0, shapeLabel: '整形（smooth）'
+};
+
+function selectUOpt(key, val, label, btn) {
+  btn.closest('.options').querySelectorAll('.opt-btn').forEach(b => {
+    b.classList.remove('selected','ucas-sel');
+  });
+  btn.classList.add('selected','ucas-sel');
+  ucasState[key] = val;
+  ucasState[key+'Label'] = label;
+  updateUcas();
+}
+
+function updateUcas() {
+  const rate = ucasState.size * ucasState.loc * ucasState.shape;
+  const rateStr = rate < 1 ? rate.toFixed(2)+'%/y' : rate.toFixed(1)+'%/y';
+
+  document.getElementById('ucas-rate').textContent = rateStr;
+  document.getElementById('ucas-size-label').textContent = ucasState.sizeLabel;
+  document.getElementById('ucas-loc-label').textContent = '×'+ucasState.loc.toFixed(2);
+  document.getElementById('ucas-shape-label').textContent = '×'+ucasState.shape.toFixed(2);
+
+  const rateEl = document.getElementById('ucas-rate');
+  const riskPct = document.getElementById('ucas-risk-pct');
+  const interp = document.getElementById('ucas-interp');
+  rateEl.className = 'ucas-rate';
+  riskPct.className = 'risk-pct';
+  riskPct.style.fontSize = '20px';
+
+  if (rate < 1.0) {
+    rateEl.classList.add('risk-low'); riskPct.style.color='#38a169';
+    riskPct.textContent='低リスク'; interp.textContent='通常経過観察';
+  } else if (rate < 3.0) {
+    rateEl.classList.add('risk-mid'); riskPct.style.color='#d69e2e';
+    riskPct.textContent='中リスク'; interp.textContent='治療を検討';
+  } else if (rate < 10) {
+    rateEl.classList.add('risk-high'); riskPct.style.color='#e53e3e';
+    riskPct.textContent='高リスク'; interp.textContent='治療を積極的に検討';
+  } else {
+    rateEl.classList.add('risk-vhigh'); riskPct.style.color='#9b2335';
+    riskPct.textContent='非常に高リスク'; interp.textContent='治療を強く推奨';
+  }
+
+  document.getElementById('ucas-breakdown').innerHTML =
+    `基準年間破裂率：${ucasState.size}%/y（${ucasState.sizeLabel}）<br>` +
+    `部位HR：×${ucasState.loc.toFixed(2)}（${ucasState.locLabel}）<br>` +
+    `形状HR：×${ucasState.shape.toFixed(2)}（${ucasState.shapeLabel}）<br>` +
+    `<b>推定 = ${rate < 1 ? rate.toFixed(2) : rate.toFixed(1)}%/y</b>`;
+}
+
+function resetUcas() {
+  ucasState.size=0.36; ucasState.sizeLabel='3〜4 mm';
+  ucasState.loc=1.0;   ucasState.locLabel='ICA / MCA / ACA / AcomA';
+  ucasState.shape=1.0; ucasState.shapeLabel='整形（smooth）';
+  document.querySelectorAll('#panel-ucas .opt-btn').forEach(b => b.classList.remove('selected','ucas-sel'));
+  document.querySelectorAll('#panel-ucas .options').forEach(opts => {
+    const first = opts.querySelector('.opt-btn');
+    if (first) { first.classList.add('selected','ucas-sel'); }
+  });
+  updateUcas();
+}
+
+// ========== UIATS ==========
+// Treatment side
+const uiatsT = {
+  age: 0,          // <40=4, 40-60=3, 61-70=2, 71-80=1, >80=0
+  sah: 0,          // prev SAH=4
+  family: 0,       // family history=3
+  ethnic: 0,       // Japanese/Finnish/Inuit=2
+  smoking: 0,      // smoking=3
+  htn: 0,          // HTN=2
+  adpkd: 0,        // ADPKD=2
+  drug: 0,         // drug abuse=2
+  alcohol: 0,      // alcohol abuse=1
+  cn: 0,           // CN deficit=4
+  mass: 0,         // mass effect=4
+  emboli: 0,       // thromboembolic=3
+  epilepsy: 0,     // epilepsy=1
+  qol: 0,          // fear of rupture QoL=2
+  multi: 0,        // multiplicity=1
+  size: 0,         // ≤3.9=0, 4-6.9=1, 7-12.9=2, 13-24=3, ≥25=4
+  irreg: 0,        // irregularity=3
+  ratio: 0,        // size/aspect ratio=1
+  loc: 0,          // BA bif=5, VA/BA=4, AComA/PComA=2
+  growth: 0,       // growth on imaging=4
+  denovo: 0,       // de novo=3
+  contralat: 0,    // contralateral stenosis=1
+};
+// Conservative side
+const uiatsC = {
+  lifeexp: 0,      // <5y=4, 5-10y=3, >10y=1
+  neuro: 0,        // neurocognitive=3
+  coag: 0,         // coagulopathy=2
+  psych: 0,        // psychiatric=2
+  age_c: 0,        // <40=0, 40-60=1, 61-70=3, 71-80=4, >80=5
+  size_c: 0,       // <6=0, 6-10=1, 10.1-20=3, >20=5
+  complex: 0,      // high=3, low=0
+  // intervention-related risk: constant +5 always
+};
+const UIATS_CONST = 5; // always added to conservative
+
+function toggleUiatsT(key, val, btn) {
+  const isCurrentlySelected = btn.classList.contains('selected');
+  btn.closest('.options').querySelectorAll('.opt-btn').forEach(b => {
+    b.classList.remove('selected','tx-sel','cx-sel');
+  });
+  if (!isCurrentlySelected) {
+    btn.classList.add('selected','tx-sel');
+    uiatsT[key] = val;
+  } else {
+    uiatsT[key] = 0;
+  }
+  updateUiats();
+}
+
+function toggleUiatsC(key, val, btn) {
+  const isCurrentlySelected = btn.classList.contains('selected');
+  btn.closest('.options').querySelectorAll('.opt-btn').forEach(b => {
+    b.classList.remove('selected','tx-sel','cx-sel');
+  });
+  if (!isCurrentlySelected) {
+    btn.classList.add('selected','cx-sel');
+    uiatsC[key] = val;
+  } else {
+    uiatsC[key] = 0;
+  }
+  updateUiats();
+}
+
+// For checkboxes (yes/no toggle)
+function toggleUiatsTCheck(key, val, btn) {
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected','tx-sel');
+    uiatsT[key] = 0;
+  } else {
+    btn.classList.add('selected','tx-sel');
+    uiatsT[key] = val;
+  }
+  updateUiats();
+}
+function toggleUiatsCCheck(key, val, btn) {
+  if (btn.classList.contains('selected')) {
+    btn.classList.remove('selected','cx-sel');
+    uiatsC[key] = 0;
+  } else {
+    btn.classList.add('selected','cx-sel');
+    uiatsC[key] = val;
+  }
+  updateUiats();
+}
+
+function updateUiats() {
+  const T = Object.values(uiatsT).reduce((a,b)=>a+b,0);
+  const C = Object.values(uiatsC).reduce((a,b)=>a+b,0) + UIATS_CONST;
+  document.getElementById('uiats-t').textContent = T;
+  document.getElementById('uiats-c').textContent = C;
+
+  // section pts
+  const tAge = uiatsT.age;
+  const tRisk = uiatsT.sah+uiatsT.family+uiatsT.ethnic+uiatsT.smoking+uiatsT.htn+uiatsT.adpkd+uiatsT.drug+uiatsT.alcohol;
+  const tSym  = uiatsT.cn+uiatsT.mass+uiatsT.emboli+uiatsT.epilepsy;
+  const tMorph= uiatsT.irreg+uiatsT.ratio;
+  const tLoc  = uiatsT.loc;
+  const tOther= uiatsT.growth+uiatsT.denovo+uiatsT.qol+uiatsT.multi+uiatsT.contralat;
+  const cAge  = uiatsC.age_c;
+  const cSize = uiatsC.size_c;
+  const cComor= uiatsC.lifeexp+uiatsC.neuro+uiatsC.coag+uiatsC.psych;
+  const cComp = uiatsC.complex;
+  const setPts = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v+'点'; };
+  setPts('ut-age-pts',   tAge);
+  setPts('ut-risk-pts',  tRisk);
+  setPts('ut-sym-pts',   tSym);
+  setPts('ut-size-pts',  uiatsT.size);
+  setPts('ut-morph-pts', tMorph);
+  setPts('ut-loc-pts',   tLoc);
+  setPts('ut-other-pts', tOther);
+  setPts('uc-age-pts',   cAge);
+  setPts('uc-size-pts',  cSize);
+  setPts('uc-comor-pts', cComor);
+  setPts('uc-complex-pts', cComp);
+
+  const diff = T - C;
+  const resEl = document.getElementById('uiats-result');
+  const subEl = document.getElementById('uiats-result-sub');
+  if (diff >= 3) {
+    resEl.className = 'uiats-result uiats-treat';
+    resEl.firstChild.textContent = '▶ 治療を推奨';
+    subEl.textContent = `治療側 +${T} vs 保存側 +${C}（差 +${diff}）`;
+  } else if (diff <= -3) {
+    resEl.className = 'uiats-result uiats-conserv';
+    resEl.firstChild.textContent = '▶ 経過観察を推奨';
+    subEl.textContent = `治療側 +${T} vs 保存側 +${C}（差 ${diff}）`;
+  } else {
+    resEl.className = 'uiats-result uiats-inconc';
+    resEl.firstChild.textContent = '▶ 判断保留（Inconclusive）';
+    subEl.textContent = `治療側 +${T} vs 保存側 +${C}（差 ${diff}、|差|≤2）`;
+  }
+}
+
+function resetUiats() {
+  Object.keys(uiatsT).forEach(k => uiatsT[k]=0);
+  Object.keys(uiatsC).forEach(k => uiatsC[k]=0);
+  document.querySelectorAll('#panel-uiats .opt-btn').forEach(b => {
+    b.classList.remove('selected','tx-sel','cx-sel');
+  });
+  updateUiats();
+}
+
+// ========== Tabs ==========
+const tabNames = ['phases','elapss','ucas','uiats'];
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', tabNames[i]===tab);
+  });
+  tabNames.forEach(n => {
+    document.getElementById('panel-'+n).classList.toggle('active', n===tab);
+  });
+}
+
+// init
+updatePhases();
+updateElapss();
+updateUcas();
+updateUiats();
+</script>
+</body>
+</html>
