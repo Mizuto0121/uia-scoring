@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 1152" role="img" aria-labelledby="title desc">
+  <title id="title">Original ASPECTS MCA territory schematic</title>
+  <desc id="desc">Two axial brain-slice schematic diagrams showing the ASPECTS MCA regions: caudate, lentiform nucleus, internal capsule, insula, M1 to M6, anterior and posterior orientation.</desc>
+  <defs>
+    <style>
+      .bg{fill:#050607}
+      .outer{fill:none;stroke:#575b5f;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+      .inner{fill:none;stroke:#55595d;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+      .fine{fill:none;stroke:#505458;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .dash{fill:none;stroke:#4d5256;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:8 16}
+      .dot{fill:#565a5e}
+      .label{fill:#17c9aa;font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:44px}
+      .orient{fill:#57cdbd;font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:30px;letter-spacing:.5px}
+      .credit{fill:#33383c;font-family:Arial,Helvetica,sans-serif;font-size:16px}
+    </style>
+  </defs>
+  <rect class="bg" width="2048" height="1152"/>
+
+  <g id="orientation">
+    <text class="orient" x="1024" y="106">ANTERIOR</text>
+    <text class="orient" x="1008" y="1086">POSTERIOR</text>
+  </g>
+
+  <g id="low-basal-slice" transform="translate(70 70) scale(.92)">
+    <path class="outer" d="M439 8C209 12 98 174 45 382 4 544 4 723 52 881c57 187 178 267 388 272 209-5 331-85 388-272 48-158 48-337 7-499C781 174 670 12 439 8Z"/>
+    <path class="inner" d="M439 39C229 43 130 186 82 391c-38 160-34 322 12 473 50 162 154 234 345 238 190-4 296-76 346-238 46-151 50-313 12-473C749 186 650 43 439 39Z"/>
+    <path class="inner" d="M439 68C249 71 162 202 119 397 85 550 91 710 133 849c43 141 132 202 306 205 174-3 263-64 306-205 42-139 48-299 14-452C716 202 629 71 439 68Z"/>
+
+    <g id="left-skull-diploe">
+      <circle class="dot" cx="187" cy="164" r="4"/><circle class="dot" cx="165" cy="201" r="5"/><circle class="dot" cx="143" cy="249" r="5"/>
+      <circle class="dot" cx="119" cy="315" r="4"/><circle class="dot" cx="94" cy="405" r="5"/><circle class="dot" cx="76" cy="512" r="5"/>
+      <circle class="dot" cx="72" cy="622" r="5"/><circle class="dot" cx="85" cy="740" r="5"/><circle class="dot" cx="111" cy="845" r="5"/>
+      <circle class="dot" cx="160" cy="956" r="5"/><circle class="dot" cx="230" cy="1040" r="5"/><circle class="dot" cx="332" cy="1091" r="5"/>
+      <circle class="dot" cx="438" cy="1111" r="5"/><circle class="dot" cx="546" cy="1092" r="5"/><circle class="dot" cx="647" cy="1039" r="5"/>
+      <circle class="dot" cx="718" cy="956" r="5"/><circle class="dot" cx="765" cy="848" r="5"/><circle class="dot" cx="791" cy="737" r="5"/>
+      <circle class="dot" cx="805" cy="622" r="5"/><circle class="dot" cx="801" cy="512" r="5"/><circle class="dot" cx="783" cy="405" r="5"/>
+      <circle class="dot" cx="758" cy="315" r="5"/><circle class="dot" cx="734" cy="249" r="5"/><circle class="dot" cx="712" cy="201" r="5"/>
+      <circle class="dot" cx="690" cy="164" r="5"/><circle class="dot" cx="596" cy="79" r="4"/><circle class="dot" cx="514" cy="46" r="5"/>
+      <circle class="dot" cx="439" cy="38" r="5"/><circle class="dot" cx="364" cy="46" r="5"/><circle class="dot" cx="281" cy="79" r="4"/>
+    </g>
+
+    <path class="fine" d="M438 69c-38 5-68 16-89 31-17 12-37 13-57 12-34 0-67 20-91 56"/>
+    <path class="fine" d="M439 69c39 5 69 16 90 31 17 12 37 13 57 12 35 0 68 20 92 56"/>
+    <path class="fine" d="M438 70c-6 59-5 124 0 193"/>
+    <path class="fine" d="M439 70c7 58 6 124 0 193"/>
+    <path class="fine" d="M253 362c-49 48-93 105-130 169-16 27-12 48 14 58 30 11 69 2 105-19"/>
+    <path class="fine" d="M626 362c48 48 92 105 129 169 16 27 12 48-14 58-31 11-70 2-105-19"/>
+    <path class="fine" d="M195 494c-56 39-88 89-96 151-5 42 9 60 42 59 30-1 59-10 86-27"/>
+    <path class="fine" d="M682 494c56 39 88 89 96 151 5 42-9 60-42 59-30-1-59-10-86-27"/>
+    <path class="fine" d="M235 727c-31 65-42 128-28 191 6 28 27 41 61 41"/>
+    <path class="fine" d="M642 727c31 65 42 128 28 191-6 28-27 41-61 41"/>
+    <path class="fine" d="M316 975c31 25 73 37 122 37 49 0 91-12 122-37"/>
+
+    <g id="deep-gray-and-ventricles">
+      <path class="inner" d="M438 343c-42-4-83 10-122 43-38 33-68 75-91 124-29 63-32 114-10 152 25 43 60 37 103-18 30-39 55-78 76-118 18-34 31-77 44-183Z"/>
+      <path class="inner" d="M441 343c42-4 83 10 122 43 38 33 68 75 91 124 29 63 32 114 10 152-25 43-60 37-103-18-30-39-55-78-76-118-18-34-31-77-44-183Z"/>
+      <path class="inner" d="M319 320c31 43 65 69 103 76"/>
+      <path class="inner" d="M558 320c-31 43-65 69-103 76"/>
+      <path class="inner" d="M438 348c-1 71-1 140 0 206"/>
+      <path class="inner" d="M439 551c-14 56-42 105-83 147-33 34-51 70-52 109"/>
+      <path class="inner" d="M439 551c14 56 42 105 83 147 33 34 51 70 52 109"/>
+      <path class="inner" d="M304 806c85-86 173-84 270 0"/>
+      <path class="dash" d="M284 473c21 45 23 92 6 141"/>
+      <path class="dash" d="M594 473c-21 45-23 92-6 141"/>
+      <ellipse class="inner" cx="438" cy="486" rx="8" ry="14"/>
+      <ellipse class="inner" cx="459" cy="486" rx="8" ry="14"/>
+    </g>
+
+    <path class="fine" d="M745 408c27 34 44 77 51 129 3 27 20 44 49 51"/>
+    <path class="fine" d="M778 619c17 22 42 34 75 36"/>
+    <path class="fine" d="M757 731c20 20 50 31 91 33"/>
+    <path class="fine" d="M711 849c25 12 53 16 85 12"/>
+    <path class="fine" d="M130 783c22 8 49 9 82 3"/>
+    <path class="fine" d="M91 661c26-9 55-8 88 1"/>
+    <path class="fine" d="M102 548c26 10 49 9 68-4"/>
+
+    <text class="label" x="633" y="305">M1</text>
+    <text class="label" x="745" y="638">M2</text>
+    <text class="label" x="704" y="832">M3</text>
+    <text class="label" x="518" y="433">C</text>
+    <text class="label" x="597" y="532">L</text>
+    <text class="label" x="698" y="530">I</text>
+    <text class="label" x="516" y="623">IC</text>
+  </g>
+
+  <g id="high-ganglionic-slice" transform="translate(1120 82) scale(.92)">
+    <path class="outer" d="M430 0C206 6 94 153 42 357 2 516 3 704 55 869c56 179 176 256 376 260 200-4 321-81 377-260 52-165 53-353 13-512C768 153 655 6 430 0Z"/>
+    <path class="inner" d="M430 31C229 37 130 165 81 365 43 520 47 690 92 846c49 154 152 221 338 225 186-4 289-71 338-225 45-156 49-326 11-481C730 165 631 37 430 31Z"/>
+    <path class="inner" d="M430 62C250 67 163 181 119 376 86 526 94 675 134 827c41 132 127 186 296 189 169-3 255-57 296-189 40-152 48-301 15-451C696 181 610 67 430 62Z"/>
+
+    <g id="right-skull-diploe">
+      <circle class="dot" cx="208" cy="118" r="5"/><circle class="dot" cx="169" cy="176" r="5"/><circle class="dot" cx="135" cy="260" r="5"/>
+      <circle class="dot" cx="107" cy="366" r="5"/><circle class="dot" cx="84" cy="491" r="5"/><circle class="dot" cx="84" cy="626" r="5"/>
+      <circle class="dot" cx="105" cy="757" r="5"/><circle class="dot" cx="147" cy="883" r="5"/><circle class="dot" cx="223" cy="982" r="5"/>
+      <circle class="dot" cx="324" cy="1040" r="5"/><circle class="dot" cx="430" cy="1057" r="5"/><circle class="dot" cx="536" cy="1040" r="5"/>
+      <circle class="dot" cx="637" cy="982" r="5"/><circle class="dot" cx="713" cy="883" r="5"/><circle class="dot" cx="755" cy="757" r="5"/>
+      <circle class="dot" cx="776" cy="626" r="5"/><circle class="dot" cx="776" cy="491" r="5"/><circle class="dot" cx="753" cy="366" r="5"/>
+      <circle class="dot" cx="725" cy="260" r="5"/><circle class="dot" cx="691" cy="176" r="5"/><circle class="dot" cx="652" cy="118" r="5"/>
+      <circle class="dot" cx="553" cy="58" r="5"/><circle class="dot" cx="430" cy="31" r="5"/><circle class="dot" cx="307" cy="58" r="5"/>
+    </g>
+
+    <path class="fine" d="M429 62c-43 5-81 19-113 43-20 15-45 18-74 15-45-3-80 19-106 67"/>
+    <path class="fine" d="M431 62c43 5 81 19 113 43 20 15 45 18 74 15 45-3 80 19 106 67"/>
+    <path class="fine" d="M429 64c-7 119-6 238 1 357"/>
+    <path class="fine" d="M431 64c7 119 6 238-1 357"/>
+    <path class="fine" d="M430 417c-5 88-5 177 0 267"/>
+    <path class="fine" d="M430 686c-3 109-4 213-1 313"/>
+
+    <path class="fine" d="M256 342c-42 106-51 215-27 327 11 53 29 76 54 72 28-4 42-32 41-82-1-111-7-213-19-307-5-39-22-43-49-10Z"/>
+    <path class="fine" d="M604 342c42 106 51 215 27 327-11 53-29 76-54 72-28-4-42-32-41-82 1-111 7-213 19-307 5-39 22-43 49-10Z"/>
+
+    <path class="fine" d="M171 218c-46 57-75 132-87 226"/>
+    <path class="fine" d="M689 218c46 57 75 132 87 226"/>
+    <path class="fine" d="M132 508c-31 52-44 116-39 192"/>
+    <path class="fine" d="M728 508c31 52 44 116 39 192"/>
+    <path class="fine" d="M146 766c20 32 55 48 105 48"/>
+    <path class="fine" d="M714 766c-20 32-55 48-105 48"/>
+    <path class="fine" d="M213 942c45 49 111 74 217 74"/>
+    <path class="fine" d="M647 942c-45 49-111 74-217 74"/>
+
+    <path class="fine" d="M552 210c43-21 88-18 137 10"/>
+    <path class="fine" d="M178 648c-37 8-67 8-91 0"/>
+    <path class="fine" d="M682 648c37 8 67 8 91 0"/>
+    <path class="fine" d="M614 832c28 18 66 20 114 7"/>
+    <path class="fine" d="M246 832c-28 18-66 20-114 7"/>
+    <path class="fine" d="M622 908c43 19 86 19 128 0"/>
+
+    <text class="label" x="608" y="208">M4</text>
+    <text class="label" x="748" y="584">M5</text>
+    <text class="label" x="705" y="843">M6</text>
+  </g>
+
+  <text class="credit" x="1690" y="1118">Original educational schematic</text>
+</svg>
