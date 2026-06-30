@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脳神経外科 スコアリング</title>
+<style>
+:root {
+  --blue:#2b6cb0; --blue-l:#ebf4ff; --blue-d:#1a4a8a; --blue-h:#2c5282;
+  --red:#c53030;  --red-l:#fff5f5;  --red-h:#9b2c2c;
+  --grn:#276749;  --grn-l:#f0fff4;  --grn-h:#22543d;
+  --pur:#6b46c1;  --pur-l:#faf5ff;  --pur-h:#44337a;
+  --tel:#2c7a7b;  --tel-l:#e6fffa;  --tel-h:#234e52;
+  --gray:#718096; --bg:#f0f4f8; --bdr:#e2e8f0; --txt:#1a202c; --txt2:#4a5568;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+.view{display:none} .view.active{display:block}
+
+/* HEADER */
+.hdr{color:white;padding:13px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.hdr-title{font-size:16px;font-weight:700;flex:1}
+.hdr-sub{font-size:10px;opacity:.75;margin-top:2px}
+.back{background:rgba(255,255,255,.18);border:none;color:white;padding:6px 11px;border-radius:6px;font-size:14px;cursor:pointer;flex-shrink:0}
+
+/* HOME */
+.home-body{padding:12px 14px 30px}
+.cat-lbl{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--gray);margin:18px 0 6px;padding-left:2px;text-transform:uppercase}
+.cat-lbl:first-child{margin-top:4px}
+.sc{background:white;border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07);border:none;width:100%;text-align:left}
+.sc:active{transform:scale(.98)}
+.sc-bar{width:4px;border-radius:2px;align-self:stretch;min-height:32px;flex-shrink:0}
+.sc-name{font-size:14px;font-weight:700;color:var(--txt)}
+.sc-sub{font-size:11px;color:var(--gray);margin-top:2px}
+.sc-arr{font-size:18px;color:#cbd5e0;margin-left:auto}
+
+/* SCORE BODY */
+.sbody{padding:14px 14px 50px}
+
+/* RESULT BADGE */
+.rbadge{background:white;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.rrow{display:flex;align-items:center;justify-content:space-between}
+.snum{font-size:52px;font-weight:700;line-height:1}
+.slbl{font-size:11px;color:var(--gray);margin-bottom:2px}
+.rdsp{text-align:right}
+.rpct{font-size:22px;font-weight:700;line-height:1.2}
+.rlsm{font-size:10px;color:var(--gray);margin-top:2px}
+.rinterp{font-size:11px;color:var(--txt2);margin-top:4px;max-width:150px;text-align:right}
+/* GCS sub */
+.gcs-row{display:flex;gap:7px;margin-top:10px}
+.gcs-c{flex:1;text-align:center;background:var(--blue-l);border-radius:8px;padding:7px 3px}
+.gcs-cl{font-size:10px;color:var(--blue-h)}
+.gcs-cv{font-size:24px;font-weight:700;color:var(--blue);line-height:1.1}
+
+/* GRADE BADGE (for grade-picker scores) */
+.gbadge{background:white;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.gnum{font-size:48px;font-weight:700;line-height:1;color:var(--gray)}
+.gtitle{font-size:14px;font-weight:600;color:var(--gray);margin-left:10px}
+.gmain{display:flex;align-items:baseline}
+.gdesc{font-size:12px;color:var(--txt2);line-height:1.5;border-top:1px solid var(--bdr);padding-top:8px;margin-top:8px}
+.grisk{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;margin-top:8px}
+
+/* Risk color classes */
+.c-none{color:#38a169} .c-low{color:#38a169} .c-mid{color:#d69e2e} .c-high{color:#e53e3e} .c-vhigh{color:#9b2335}
+.t-none{background:#f0fff4;color:#276749} .t-low{background:#f0fff4;color:#276749}
+.t-mid{background:#fffbeb;color:#744210} .t-high{background:#fff5f5;color:#c53030} .t-vhigh{background:#fee2e2;color:#742a2a}
+
+/* SECTIONS */
+.sec{background:white;border-radius:10px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.sh{padding:9px 13px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.sp{font-size:11px;color:white;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.sh-b{background:var(--blue-l);color:var(--blue-h)} .sh-b .sp{background:var(--blue)}
+.sh-r{background:var(--red-l);color:var(--red-h)}   .sh-r .sp{background:var(--red)}
+.sh-g{background:var(--grn-l);color:var(--grn-h)}   .sh-g .sp{background:var(--grn)}
+.sh-p{background:var(--pur-l);color:var(--pur-h)}   .sh-p .sp{background:var(--pur)}
+.sh-t{background:var(--tel-l);color:var(--tel-h)}   .sh-t .sp{background:var(--tel)}
+
+.opts{padding:8px;display:flex;flex-direction:column;gap:5px}
+.ob{width:100%;padding:9px 12px;border:2px solid var(--bdr);border-radius:8px;background:white;text-align:left;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .15s;color:var(--txt);line-height:1.4}
+.ob:active{transform:scale(.98)}
+.op{font-size:11px;font-weight:700;color:#a0aec0;min-width:36px;text-align:right;white-space:nowrap;flex-shrink:0;margin-left:8px}
+
+/* Selected states */
+.sb{border-color:var(--blue)!important;background:var(--blue-l)!important;color:var(--blue-h)!important;font-weight:600}
+.sb .op{color:var(--blue)}
+.sr{border-color:var(--red)!important;background:var(--red-l)!important;color:var(--red-h)!important;font-weight:600}
+.sr .op{color:var(--red)}
+.sg{border-color:var(--grn)!important;background:var(--grn-l)!important;color:var(--grn-h)!important;font-weight:600}
+.sg .op{color:var(--grn)}
+.sp2{border-color:var(--pur)!important;background:var(--pur-l)!important;color:var(--pur-h)!important;font-weight:600}
+.sp2 .op{color:var(--pur)}
+.st{border-color:var(--tel)!important;background:var(--tel-l)!important;color:var(--tel-h)!important;font-weight:600}
+.st .op{color:var(--tel)}
+
+.reset{width:100%;margin-top:6px;padding:11px;background:var(--red);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
+.reset:active{opacity:.8}
+.ref{text-align:center;font-size:10px;color:#a0aec0;margin-top:8px}
+.note{background:#fffbeb;border-left:3px solid #d69e2e;border-radius:6px;padding:8px 12px;font-size:11px;color:#744210;margin-bottom:12px;line-height:1.5}
+
+/* UIATS */
+.uia-badge{background:white;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.uia-cols{display:flex;gap:10px;margin-bottom:10px}
+.uia-col{flex:1;border-radius:8px;padding:10px;text-align:center}
+.uia-ct{background:var(--blue-l)} .uia-cc{background:var(--red-l)}
+.uia-lbl{font-size:10px;font-weight:700;margin-bottom:4px}
+.uia-ct .uia-lbl{color:var(--blue)} .uia-cc .uia-lbl{color:var(--red)}
+.uia-n{font-size:36px;font-weight:700;line-height:1}
+.uia-ct .uia-n{color:var(--blue)} .uia-cc .uia-n{color:var(--red)}
+.uia-res{text-align:center;padding:10px;border-radius:8px;font-weight:700;font-size:14px}
+.uia-treat{background:var(--blue-l);color:var(--blue)}
+.uia-cons{background:var(--red-l);color:var(--red)}
+.uia-inc{background:#fffbeb;color:#744210}
+.uia-sub{font-size:11px;font-weight:400;margin-top:3px}
+.sel-tx{border-color:var(--blue)!important;background:var(--blue-l)!important;color:var(--blue-h)!important;font-weight:600}
+.sel-tx .op{color:var(--blue)}
+.sel-cx{border-color:var(--red)!important;background:var(--red-l)!important;color:var(--red-h)!important;font-weight:600}
+.sel-cx .op{color:var(--red)}
+.always-tag{font-size:10px;background:var(--gray);color:white;border-radius:4px;padding:1px 6px;margin-left:6px}
+
+/* UCAS */
+.ucas-bdg{background:white;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.ucas-rate{font-size:36px;font-weight:700;line-height:1}
+.ucas-bk{font-size:11px;color:var(--gray);margin-top:8px;line-height:1.6;border-top:1px solid var(--bdr);padding-top:8px}
+
+/* SM combined */
+.sm-row{display:flex;gap:8px;margin-top:10px}
+.sm-box{flex:1;text-align:center;border-radius:8px;padding:8px 4px}
+.sm-bl{font-size:10px}
+.sm-bv{font-size:22px;font-weight:700;line-height:1.2}
+
+/* ASPECTS interactive maps */
+.asp-badge{background:white;border-radius:12px;padding:13px 15px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:space-between}
+.asp-score{font-size:48px;font-weight:800;line-height:1;color:var(--blue)}
+.asp-score small{font-size:15px;color:var(--gray);font-weight:600}
+.asp-meta{text-align:right;font-size:12px;color:var(--gray);line-height:1.6}
+.asp-meta strong{display:block;color:var(--txt);font-size:16px;font-weight:800}
+.asp-side{display:flex;gap:7px;margin-bottom:10px}
+.asp-side button{flex:1;border:1px solid var(--bdr);background:white;border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:var(--gray)}
+.asp-side button.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue)}
+.asp-card{background:white;border-radius:12px;padding:10px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.asp-note{font-size:11px;color:var(--txt2);line-height:1.55;margin:2px 4px 10px}
+.asp-map{width:100%;max-width:460px;display:block;margin:auto;touch-action:manipulation;user-select:none;background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border-radius:12px}
+.asp-region{stroke:#fff;stroke-width:2.1;stroke-linejoin:round;fill-opacity:.28;cursor:pointer;pointer-events:all;transition:opacity .12s,filter .12s;filter:drop-shadow(0 1px 1px rgba(26,54,93,.12))}.aspects-hires .asp-region{stroke-width:4;fill-opacity:.30}
+.asp-region:active{opacity:.72}.asp-region.hit{fill:url(#asp-hatch)!important;stroke:#9b2c2c;fill-opacity:.82}
+.asp-label{font-size:13px;font-weight:800;fill:#1a202c;pointer-events:none;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:rgba(255,255,255,.9);stroke-width:2.5px;stroke-linejoin:round}.aspects-hires .asp-label{font-size:29px;stroke-width:6px}
+.aspects-ref .asp-label{font-size:18px;stroke-width:4px}.aspects-ref .asp-region{fill-opacity:1;stroke:#fff;stroke-width:2.4;filter:none}.aspects-ref .asp-region.hit{stroke:#9b2c2c;fill-opacity:1}
+.asp-label.hit{fill:white}.asp-outline{fill:#edf2f7;stroke:#a0aec0;stroke-width:2}.asp-mid{stroke:#cbd5e0;stroke-width:2;stroke-dasharray:5 4}
+.asp-boundary{fill:none;stroke:#2d3748;stroke-width:1.3;stroke-dasharray:4 4;opacity:.36;pointer-events:none}
+.asp-brain-fill{fill:#f0f4f8;stroke:#2d3748;stroke-width:2.1}.asp-brain-mid{stroke:#2d3748;stroke-width:1.5;stroke-linecap:round}.asp-sulcus{fill:none;stroke:#2d3748;stroke-width:1.4;stroke-linecap:round;opacity:.75}.asp-unscored{fill:#d4e4f2;stroke:#fff;stroke-width:1.8;stroke-linejoin:round;pointer-events:none}.asp-deep{fill:#b8cfe4;stroke:#fff;stroke-width:1.5;pointer-events:none}.asp-thal{fill:#c8d8e8;stroke:#fff;stroke-width:1.5;pointer-events:none}
+.asp-slice-title{font-size:12px;font-weight:700;fill:#718096;text-anchor:middle}
+.asp-brain{fill:#f7fafc;stroke:#718096;stroke-width:2.4}.asp-cortex{fill:none;stroke:#cbd5e0;stroke-width:1.5;stroke-linecap:round}.asp-vent{fill:#d9e2ec;stroke:#90a4b8;stroke-width:1.4}.asp-ghost{fill:#e2e8f0;stroke:#cbd5e0;stroke-width:1.4}.asp-anat{fill:#edf2f7;stroke:#a0aec0;stroke-width:1.4}.asp-orient{font-size:10px;font-weight:800;fill:#a0aec0;text-anchor:middle}.asp-side-mark{font-size:11px;font-weight:800;fill:#4a5568;text-anchor:middle}
+.asp-scan-bg{pointer-events:none}.asp-level-tag{font-size:25px;font-weight:800;fill:#2d3748;text-anchor:middle;paint-order:stroke;stroke:white;stroke-width:8px}.asp-orient-lg{font-size:23px;font-weight:800;fill:#718096;text-anchor:middle;paint-order:stroke;stroke:white;stroke-width:6px}.asp-side-lg{font-size:22px;font-weight:800;fill:#4a5568;text-anchor:middle;paint-order:stroke;stroke:white;stroke-width:6px}
+.asp-selected{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;margin:12px 0 4px;align-items:center}
+.asp-chip{display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:5px 11px 5px 8px;font-size:12px;font-weight:700;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;transition:opacity .15s}
+.asp-chip:active{opacity:.6}
+.asp-btn-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}
+.asp-btn{border:1px solid #e2e8f0;background:white;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:800;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:transform .08s,opacity .12s,border-color .12s,background .12s;line-height:1.2}
+.asp-btn:active{transform:scale(.97)}
+.asp-btn.on{background:#fed7d7;border-color:#e53e3e;color:#9b2c2c}
+.asp-btn small{display:block;font-size:9px;font-weight:700;color:var(--gray);margin-top:2px;line-height:1.15}
+.asp-btn small.jp{font-size:10px;color:#4a5568}
+.asp-ref-img{width:100%;max-width:460px;display:block;margin:auto;border-radius:8px}
+.pc-ref-missing{display:none;background:#f7fafc;border:1px dashed #cbd5e0;border-radius:10px;padding:18px 12px;text-align:center;color:#718096;font-size:12px;line-height:1.6}
+.asp-static-label{font-size:13px;font-weight:800;fill:#1a202c;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:white;stroke-width:3px}
+.asp-static-sub{font-size:10px;font-weight:700;fill:#718096;text-anchor:middle}
+.asp-swatch{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
+.asp-empty{color:#a0aec0;font-size:12px;font-style:italic;padding:2px 0}
+.asp-score.s-warn{color:#d69e2e}
+.asp-score.s-bad{color:#e53e3e}
+.asp-legend{display:flex;gap:12px;justify-content:center;font-size:10px;color:var(--gray);margin-top:5px}.asp-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+/* dAVF */
+.davf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.davf-card{background:var(--tel-l);border:2px solid var(--tel);border-radius:12px;padding:12px 14px;text-align:center}
+.davf-card .slbl{font-size:11px;color:var(--tel-h);margin-bottom:4px}
+.davf-card .val{font-size:28px;font-weight:800;color:var(--tel-h);line-height:1.1}
+.davf-card .val.unknown{font-size:22px;color:#a0aec0}
+.davf-desc{background:#f7fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.6;color:var(--txt)}
+.davf-desc .desc-row{display:flex;gap:6px;margin-bottom:3px}
+.davf-desc .desc-row b{color:var(--tel-h);white-space:nowrap}
+.davf-risk{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.davf-risk.low{background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.davf-risk.mod{background:#fffbeb;color:#744210;border:1px solid #f6e05e}
+.davf-risk.high{background:#fff5f5;color:#9b2c2c;border:1px solid #feb2b2}
+.davf-risk.vhigh{background:#e53e3e;color:white;border:1px solid #c53030}
+.davf-hint{color:#a0aec0;font-size:12px;font-style:italic;margin-bottom:14px;text-align:center;padding:8px 0}
+.lalw-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lalw-card{background:white;border:2px solid #e2e8f0;border-radius:10px;padding:8px 4px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden;width:100%}
+.lalw-card:active{transform:scale(.97)}
+.lalw-on{border-color:var(--tel)!important;background:var(--tel-l)!important}
+.lalw-bar{height:4px;border-radius:2px;margin:-8px -4px 8px;width:calc(100% + 8px)}
+.lalw-type{font-size:13px;font-weight:800;color:#1a202c;margin-bottom:3px}
+.lalw-on .lalw-type{color:var(--tel-h)}
+.lalw-sinus{font-size:9px;color:#718096;line-height:1.3;margin-bottom:4px}
+.lalw-cvr{font-size:9px;font-weight:600;color:#718096;background:#f7fafc;border-radius:4px;padding:2px 3px}
+.lalw-cvr-yes{color:#c53030;background:#fff5f5}
+.davf-step{margin-bottom:14px}
+.davf-qlabel{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:8px}
+.davf-yns{display:flex;gap:8px;flex-wrap:wrap}
+.davf-yn{flex:1;min-width:100px;background:white;border:2px solid var(--bdr);border-radius:8px;padding:9px 10px;font-size:13px;font-weight:600;color:var(--txt2);cursor:pointer;text-align:center}
+.davf-yn:active{transform:scale(.97)}
+.davf-yon{border-color:var(--tel)!important;background:var(--tel-l)!important;color:var(--tel-h)!important}
+.davf-q{font-size:11px;font-weight:700;color:var(--gray);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.davf-sub{margin-top:5px;margin-left:16px}
+.davf-sub .ob{background:#fafafa;border-color:#e2e8f0}
+.ob.davf-on{border-color:var(--tel)!important;background:var(--tel-l)!important;color:var(--tel-h)!important;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ===== HOME ===== -->
+<div class="view active" id="view-home">
+  <div class="hdr" style="background:var(--blue-d)">
+    <div>
+      <div class="hdr-title">🧠 脳神経外科 スコアリング</div>
+      <div class="hdr-sub">SAH・脳卒中・UIA・AVM・dAVF — 25スコア収録</div>
+    </div>
+  </div>
+  <div class="home-body">
+    <div class="cat-lbl">くも膜下出血（SAH）</div>
+    <button class="sc" onclick="showView('gcs')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">GCS</div><div class="sc-sub">Glasgow Coma Scale — 意識レベル</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('hh')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">Hunt &amp; Hess</div><div class="sc-sub">SAH 重症度分類 Grade 0–5</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('wfns')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">WFNS</div><div class="sc-sub">SAH 重症度分類（GCS 基準）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('fisher')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">Fisher Grade</div><div class="sc-sub">CT 出血形態 → 脳血管攣縮リスク</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('modfisher')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">Modified Fisher Grade</div><div class="sc-sub">IVH の有無を加味した攣縮予測</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">脳梗塞</div>
+    <button class="sc" onclick="showView('nihss')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">NIHSS</div><div class="sc-sub">NIH Stroke Scale — 神経症状重症度（0–42）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('aspects')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">ASPECTS / DWI-ASPECTS</div><div class="sc-sub">CT / MRI DWI — MCA領域虚血変化（0–10）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('pc-aspects')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">PC-ASPECTS</div><div class="sc-sub">後方循環領域の虚血変化（0–10）</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">脳卒中全般</div>
+    <button class="sc" onclick="showView('mrs')"><div class="sc-bar" style="background:var(--grn)"></div><div><div class="sc-name">mRS</div><div class="sc-sub">modified Rankin Scale — 機能転帰</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('hdsr')"><div class="sc-bar" style="background:var(--grn)"></div><div><div class="sc-name">HDS-R</div><div class="sc-sub">改訂長谷川式簡易知能評価スケール（0–30）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('mmse')"><div class="sc-bar" style="background:var(--grn)"></div><div><div class="sc-name">MMSE</div><div class="sc-sub">Mini-Mental State Examination（0–30）</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">未破裂脳動脈瘤（UIA）</div>
+    <button class="sc" onclick="showView('phases')"><div class="sc-bar" style="background:var(--pur)"></div><div><div class="sc-name">PHASES</div><div class="sc-sub">5 年破裂リスク予測</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('elapss')"><div class="sc-bar" style="background:var(--pur)"></div><div><div class="sc-name">ELAPSS</div><div class="sc-sub">増大リスク予測</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('ucas')"><div class="sc-bar" style="background:var(--pur)"></div><div><div class="sc-name">UCAS</div><div class="sc-sub">年間破裂率推定（日本人コホート）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('uiats')"><div class="sc-bar" style="background:var(--pur)"></div><div><div class="sc-name">UIATS</div><div class="sc-sub">治療 vs 経過観察 判断支援</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">脳動静脈奇形（AVM）</div>
+    <button class="sc" onclick="showView('sm')"><div class="sc-bar" style="background:var(--tel)"></div><div><div class="sc-name">Spetzler-Martin / Modified</div><div class="sc-sub">手術リスク分類（Lawton-Young 補正）</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">硬膜動静脈瘻（dAVF）</div>
+    <button class="sc" onclick="showView('davf')"><div class="sc-bar" style="background:var(--tel)"></div><div><div class="sc-name">Borden / Cognard 分類</div><div class="sc-sub">静脈還流パターンによるリスク分類</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('lalwani')"><div class="sc-bar" style="background:var(--tel)"></div><div><div class="sc-name">Lalwani 分類</div><div class="sc-sub">横-S状静脈洞部 dAVF — Aggressive symptom頻度</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">脳出血（ICH）</div>
+    <button class="sc" onclick="showView('ich')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">ICH Score</div><div class="sc-sub">自発性脳出血 30日死亡率予測（0–6点）</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">脳梗塞・TIA</div>
+    <button class="sc" onclick="showView('toast')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">TOAST 分類</div><div class="sc-sub">脳梗塞病型分類（5 サブタイプ）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('abcd2')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">ABCD² スコア</div><div class="sc-sub">TIA後 2日以内の脳卒中リスク（0–7点）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('mtici')"><div class="sc-bar" style="background:var(--blue)"></div><div><div class="sc-name">mTICI</div><div class="sc-sub">血栓回収後 再灌流グレード（0 / 1 / 2a / 2b / 2c / 3）</div></div><div class="sc-arr">›</div></button>
+
+    <div class="cat-lbl">心房細動・抗凝固療法</div>
+    <button class="sc" onclick="showView('cha2ds2')"><div class="sc-bar" style="background:var(--pur)"></div><div><div class="sc-name">CHA₂DS₂-VASc</div><div class="sc-sub">心房細動 年間脳卒中リスク（0–9点）</div></div><div class="sc-arr">›</div></button>
+    <button class="sc" onclick="showView('hasbled')"><div class="sc-bar" style="background:var(--red)"></div><div><div class="sc-name">HAS-BLED</div><div class="sc-sub">抗凝固療法中 年間大出血リスク（0–9点）</div></div><div class="sc-arr">›</div></button>
+  </div>
+</div>
+
+<!-- ===== GCS ===== -->
+<div class="view" id="view-gcs">
+  <div class="hdr" style="background:#2c5282">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">GCS</div><div class="hdr-sub">Glasgow Coma Scale</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">GCS 合計</div><div class="snum c-low" id="gcs-total">3</div></div>
+        <div class="rdsp"><div class="rpct c-high" id="gcs-interp">重症</div><div class="rlsm">意識障害の程度</div></div>
+      </div>
+      <div class="gcs-row">
+        <div class="gcs-c"><div class="gcs-cl">E（開眼）</div><div class="gcs-cv" id="gcs-e">1</div></div>
+        <div class="gcs-c"><div class="gcs-cl">V（言語）</div><div class="gcs-cv" id="gcs-v">1</div></div>
+        <div class="gcs-c"><div class="gcs-cl">M（運動）</div><div class="gcs-cv" id="gcs-m">1</div></div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sh sh-b">E — 開眼（Eye Opening）<span class="sp" id="gcs-e-pts">1点</span></div>
+      <div class="opts">
+        <button class="ob" onclick="selGCS('E',4,this)">4 — 自発的に開眼<span class="op">4</span></button>
+        <button class="ob" onclick="selGCS('E',3,this)">3 — 呼びかけで開眼<span class="op">3</span></button>
+        <button class="ob" onclick="selGCS('E',2,this)">2 — 痛み刺激で開眼<span class="op">2</span></button>
+        <button class="ob selected sb" onclick="selGCS('E',1,this)">1 — 開眼なし<span class="op">1</span></button>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sh sh-b">V — 言語反応（Verbal Response）<span class="sp" id="gcs-v-pts">1点</span></div>
+      <div class="opts">
+        <button class="ob" onclick="selGCS('V',5,this)">5 — 見当識あり・会話可能<span class="op">5</span></button>
+        <button class="ob" onclick="selGCS('V',4,this)">4 — 混乱した会話<span class="op">4</span></button>
+        <button class="ob" onclick="selGCS('V',3,this)">3 — 不適切な発語<span class="op">3</span></button>
+        <button class="ob" onclick="selGCS('V',2,this)">2 — 理解不明の発声<span class="op">2</span></button>
+        <button class="ob selected sb" onclick="selGCS('V',1,this)">1 — 発語なし<span class="op">1</span></button>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sh sh-b">M — 運動反応（Motor Response）<span class="sp" id="gcs-m-pts">1点</span></div>
+      <div class="opts">
+        <button class="ob" onclick="selGCS('M',6,this)">6 — 命令に従う<span class="op">6</span></button>
+        <button class="ob" onclick="selGCS('M',5,this)">5 — 痛み刺激部位に手を持ってくる<span class="op">5</span></button>
+        <button class="ob" onclick="selGCS('M',4,this)">4 — 逃避反応（屈曲）<span class="op">4</span></button>
+        <button class="ob" onclick="selGCS('M',3,this)">3 — 異常屈曲（除皮質硬直）<span class="op">3</span></button>
+        <button class="ob" onclick="selGCS('M',2,this)">2 — 伸展反応（除脳硬直）<span class="op">2</span></button>
+        <button class="ob selected sb" onclick="selGCS('M',1,this)">1 — 反応なし<span class="op">1</span></button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGCS()">リセット</button>
+    <div class="ref">Teasdale & Jennett, Lancet 1974</div>
+  </div>
+</div>
+
+<!-- ===== Hunt & Hess ===== -->
+<div class="view" id="view-hh">
+  <div class="hdr" style="background:#2c5282">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Hunt &amp; Hess</div><div class="hdr-sub">SAH 重症度分類</div></div>
+  </div>
+  <div class="sbody">
+    <div class="gbadge">
+      <div class="gmain">
+        <div class="gnum" id="hh-num">—</div>
+        <div class="gtitle" id="hh-title">グレードを選択してください</div>
+      </div>
+      <div class="gdesc" id="hh-desc" style="display:none"></div>
+      <span class="grisk" id="hh-risk" style="display:none"></span>
+    </div>
+    <div class="sec">
+      <div class="sh sh-b">グレード選択</div>
+      <div class="opts">
+        <button class="ob" onclick="selHH(0,this,'未破裂動脈瘤（偶然発見）','手術対象の評価に使用','—','t-none')">Grade 0 — 未破裂（偶然発見）<span class="op">—</span></button>
+        <button class="ob" onclick="selHH(1,this,'無症状 または 軽微な頭痛・項部硬直','手術死亡率 約 2–5%','低リスク','t-low')">Grade I — 無症状・軽微な頭痛・項部硬直<span class="op">低</span></button>
+        <button class="ob" onclick="selHH(2,this,'中等〜重度頭痛・項部硬直、脳神経麻痺を除き神経学的異常なし','手術死亡率 約 5–10%','中リスク','t-mid')">Grade II — 中等度頭痛・項部硬直（神経麻痺除き麻痺なし）<span class="op">中</span></button>
+        <button class="ob" onclick="selHH(3,this,'傾眠・錯乱・軽度の巣症状','手術死亡率 約 15–20%','中〜高リスク','t-high')">Grade III — 傾眠・錯乱・軽度巣症状<span class="op">中高</span></button>
+        <button class="ob" onclick="selHH(4,this,'昏迷・中〜重度片麻痺・除脳硬直初期・自律神経障害','手術死亡率 約 30–40%','高リスク','t-high')">Grade IV — 昏迷・中等度片麻痺・除脳硬直初期<span class="op">高</span></button>
+        <button class="ob" onclick="selHH(5,this,'深昏睡・除脳硬直・瀕死状態','手術死亡率 約 50–80%','非常に高リスク','t-vhigh')">Grade V — 深昏睡・除脳硬直・瀕死<span class="op">最高</span></button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGrade('hh')">リセット</button>
+    <div class="ref">Hunt &amp; Hess, J Neurosurg 1968</div>
+  </div>
+</div>
+
+<!-- ===== WFNS ===== -->
+<div class="view" id="view-wfns">
+  <div class="hdr" style="background:#2c5282">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">WFNS</div><div class="hdr-sub">World Federation of Neurosurgical Societies SAH Grade</div></div>
+  </div>
+  <div class="sbody">
+    <div class="gbadge">
+      <div class="gmain">
+        <div class="gnum" id="wfns-num">—</div>
+        <div class="gtitle" id="wfns-title">グレードを選択してください</div>
+      </div>
+      <div class="gdesc" id="wfns-desc" style="display:none"></div>
+      <span class="grisk" id="wfns-risk" style="display:none"></span>
+    </div>
+    <div class="sec">
+      <div class="sh sh-b">グレード選択（GCS + 運動麻痺）</div>
+      <div class="opts">
+        <button class="ob" onclick="selWFNS(1,this,'GCS 15、運動麻痺なし','良好な転帰が期待できる','低リスク','t-low')">Grade I — GCS 15、運動麻痺なし<span class="op">低</span></button>
+        <button class="ob" onclick="selWFNS(2,this,'GCS 13–14、運動麻痺なし','手術成績良好','低〜中リスク','t-low')">Grade II — GCS 13–14、運動麻痺なし<span class="op">低中</span></button>
+        <button class="ob" onclick="selWFNS(3,this,'GCS 13–14、運動麻痺あり','中等度リスク','中リスク','t-mid')">Grade III — GCS 13–14、運動麻痺あり<span class="op">中</span></button>
+        <button class="ob" onclick="selWFNS(4,this,'GCS 7–12、運動麻痺の有無を問わず','高リスク・積極的管理を要する','高リスク','t-high')">Grade IV — GCS 7–12（麻痺の有無問わず）<span class="op">高</span></button>
+        <button class="ob" onclick="selWFNS(5,this,'GCS 3–6、運動麻痺の有無を問わず','最重症・死亡率高い','非常に高リスク','t-vhigh')">Grade V — GCS 3–6（麻痺の有無問わず）<span class="op">最高</span></button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGrade('wfns')">リセット</button>
+    <div class="ref">WFNS Committee, J Neurosurg 1988</div>
+  </div>
+</div>
+
+<!-- ===== Fisher ===== -->
+<div class="view" id="view-fisher">
+  <div class="hdr" style="background:#9b2c2c">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Fisher Grade</div><div class="hdr-sub">CT 所見による脳血管攣縮リスク</div></div>
+  </div>
+  <div class="sbody">
+    <div class="gbadge">
+      <div class="gmain">
+        <div class="gnum" id="fisher-num">—</div>
+        <div class="gtitle" id="fisher-title">グレードを選択してください</div>
+      </div>
+      <div class="gdesc" id="fisher-desc" style="display:none"></div>
+      <span class="grisk" id="fisher-risk" style="display:none"></span>
+    </div>
+    <div class="sec">
+      <div class="sh sh-r">CT 所見によるグレード選択</div>
+      <div class="opts">
+        <button class="ob" onclick="selFisher(1,this,'CT で出血なし','脳血管攣縮リスク 低','t-low')">Grade 1 — CT で SAH 血液なし<span class="op c-low">低</span></button>
+        <button class="ob" onclick="selFisher(2,this,'びまん性・薄い SAH（&lt;1mm）、血腫・凝血塊なし','脳血管攣縮リスク 低〜中','t-low')">Grade 2 — びまん性または薄い SAH（&lt;1 mm）、凝血塊なし<span class="op c-mid">低中</span></button>
+        <button class="ob" onclick="selFisher(3,this,'限局性凝血塊 または 厚い SAH（≥1mm）','脳血管攣縮リスク 最高（Grade 3 が最もリスク高）','t-high')">Grade 3 — 限局性血腫 または 厚い SAH（≥1 mm）<span class="op c-high">最高</span></button>
+        <button class="ob" onclick="selFisher(4,this,'脳内出血（ICH）または 脳室内出血（IVH）を伴う（SAH は薄いか無し）','脳血管攣縮リスク 中（Grade 3 より低い）','t-mid')">Grade 4 — ICH または IVH あり（SAH は薄いか無し）<span class="op c-mid">中</span></button>
+      </div>
+    </div>
+    <div class="note">Grade 3（厚い SAH）が最も攣縮リスクが高く、Grade 4（ICH/IVH）は逆に Grade 3 より低くなるパラドックスがあります。このため Modified Fisher が開発されました。</div>
+    <button class="reset" onclick="resetGrade('fisher')">リセット</button>
+    <div class="ref">Fisher et al., Neurosurgery 1980</div>
+  </div>
+</div>
+
+<!-- ===== Modified Fisher ===== -->
+<div class="view" id="view-modfisher">
+  <div class="hdr" style="background:#9b2c2c">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Modified Fisher Grade</div><div class="hdr-sub">IVH を加味した脳血管攣縮予測</div></div>
+  </div>
+  <div class="sbody">
+    <div class="gbadge">
+      <div class="gmain">
+        <div class="gnum" id="mf-num">—</div>
+        <div class="gtitle" id="mf-title">グレードを選択してください</div>
+      </div>
+      <div class="gdesc" id="mf-desc" style="display:none"></div>
+      <span class="grisk" id="mf-risk" style="display:none"></span>
+    </div>
+    <div class="sec">
+      <div class="sh sh-r">CT 所見によるグレード選択</div>
+      <div class="opts">
+        <button class="ob" onclick="selMF(0,this,'SAH なし、IVH なし','症候性脳血管攣縮リスク ≈ 0%','t-none')">Grade 0 — SAH なし、IVH なし<span class="op c-none">0%</span></button>
+        <button class="ob" onclick="selMF(1,this,'薄い SAH（&lt;1 mm、凝血塊なし）、IVH なし','症候性脳血管攣縮リスク ≈ 6%','t-low')">Grade 1 — 薄い SAH（&lt;1 mm）、IVH なし<span class="op c-low">6%</span></button>
+        <button class="ob" onclick="selMF(2,this,'薄い SAH（&lt;1 mm、凝血塊なし）、IVH あり','症候性脳血管攣縮リスク ≈ 14%','t-mid')">Grade 2 — 薄い SAH（&lt;1 mm）、IVH あり<span class="op c-mid">14%</span></button>
+        <button class="ob" onclick="selMF(3,this,'厚い SAH（≥1 mm または槽を充満する凝血塊）、IVH なし','症候性脳血管攣縮リスク ≈ 33%','t-high')">Grade 3 — 厚い SAH（≥1 mm）、IVH なし<span class="op c-high">33%</span></button>
+        <button class="ob" onclick="selMF(4,this,'厚い SAH（≥1 mm または槽を充満する凝血塊）、IVH あり','症候性脳血管攣縮リスク ≈ 40%','t-vhigh')">Grade 4 — 厚い SAH（≥1 mm）、IVH あり<span class="op c-vhigh">40%</span></button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGrade('mf')">リセット</button>
+    <div class="ref">Frontera et al., Neurosurgery 2006</div>
+  </div>
+</div>
+
+<!-- ===== mRS ===== -->
+<div class="view" id="view-mrs">
+  <div class="hdr" style="background:#22543d">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">mRS</div><div class="hdr-sub">modified Rankin Scale</div></div>
+  </div>
+  <div class="sbody">
+    <div class="gbadge">
+      <div class="gmain">
+        <div class="gnum" id="mrs-num">—</div>
+        <div class="gtitle" id="mrs-title">スコアを選択してください</div>
+      </div>
+      <div class="gdesc" id="mrs-desc" style="display:none"></div>
+      <span class="grisk" id="mrs-risk" style="display:none"></span>
+    </div>
+    <div class="sec">
+      <div class="sh sh-g">スコア選択</div>
+      <div class="opts">
+        <button class="ob" onclick="selMRS(0,this,'症状なし','完全回復','t-none')">0 — 症状なし<span class="op c-none">完全</span></button>
+        <button class="ob" onclick="selMRS(1,this,'症状はあるが日常生活・活動能力に支障なし','軽度障害','t-low')">1 — 症状あり、日常生活に支障なし<span class="op c-low">軽微</span></button>
+        <button class="ob" onclick="selMRS(2,this,'軽度障害：以前のすべての活動はできないが、介助なしで日常生活を管理できる','軽度障害','t-low')">2 — 軽度障害（介助不要、日常生活自立）<span class="op c-low">軽度</span></button>
+        <button class="ob" onclick="selMRS(3,this,'中等度障害：何らかの介助が必要だが、介助なしで歩行可能','中等度障害','t-mid')">3 — 中等度障害（介助要、歩行自立）<span class="op c-mid">中度</span></button>
+        <button class="ob" onclick="selMRS(4,this,'中等度〜重度障害：介助なしで歩行不能、日常生活動作に介助が必要','中等度〜重度障害','t-high')">4 — 中〜重度障害（歩行・ADL に介助要）<span class="op c-high">中重</span></button>
+        <button class="ob" onclick="selMRS(5,this,'重度障害：寝たきり・失禁・常時介護が必要','重度障害','t-vhigh')">5 — 重度障害（寝たきり・常時介護）<span class="op c-vhigh">重度</span></button>
+        <button class="ob" onclick="selMRS(6,this,'死亡','—','t-vhigh')">6 — 死亡<span class="op c-vhigh">—</span></button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetGrade('mrs')">リセット</button>
+    <div class="ref">Rankin, Scott Med J 1957 / van Swieten et al., Stroke 1988</div>
+  </div>
+</div>
+
+<!-- ===== NIHSS ===== -->
+<div class="view" id="view-nihss">
+  <div class="hdr" style="background:#22543d">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">NIHSS</div><div class="hdr-sub">NIH Stroke Scale（0–42）</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">NIHSS 合計</div><div class="snum c-none" id="nihss-total">0</div></div>
+        <div class="rdsp"><div class="rpct c-none" id="nihss-sev">症状なし</div><div class="rlsm">重症度</div></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sh sh-g">1a. 意識水準（LOC）<span class="sp" id="n-la-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('la',0,this)">0 — 完全覚醒・協力的<span class="op">0</span></button>
+      <button class="ob" onclick="selN('la',1,this)">1 — 傾眠（声かけで覚醒）<span class="op">1</span></button>
+      <button class="ob" onclick="selN('la',2,this)">2 — 昏迷（繰り返し刺激が必要）<span class="op">2</span></button>
+      <button class="ob" onclick="selN('la',3,this)">3 — 昏睡・無反応<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">1b. 意識水準－質問（月・年齢）<span class="sp" id="n-lb-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('lb',0,this)">0 — 両方正解<span class="op">0</span></button>
+      <button class="ob" onclick="selN('lb',1,this)">1 — 一方のみ正解（挿管・失語含む）<span class="op">1</span></button>
+      <button class="ob" onclick="selN('lb',2,this)">2 — 両方不正解<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">1c. 意識水準－命令（開閉眼・握拳）<span class="sp" id="n-lc-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('lc',0,this)">0 — 両方実行<span class="op">0</span></button>
+      <button class="ob" onclick="selN('lc',1,this)">1 — 一方のみ実行<span class="op">1</span></button>
+      <button class="ob" onclick="selN('lc',2,this)">2 — 両方不実行<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">2. 最良の注視（水平眼球運動）<span class="sp" id="n-gz-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('gz',0,this)">0 — 正常<span class="op">0</span></button>
+      <button class="ob" onclick="selN('gz',1,this)">1 — 部分的注視麻痺<span class="op">1</span></button>
+      <button class="ob" onclick="selN('gz',2,this)">2 — 強制偏視・完全注視麻痺<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">3. 視野<span class="sp" id="n-vi-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('vi',0,this)">0 — 視野欠損なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('vi',1,this)">1 — 部分的半盲<span class="op">1</span></button>
+      <button class="ob" onclick="selN('vi',2,this)">2 — 完全半盲<span class="op">2</span></button>
+      <button class="ob" onclick="selN('vi',3,this)">3 — 両側性半盲（皮質盲含む）<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">4. 顔面麻痺<span class="sp" id="n-fa-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('fa',0,this)">0 — 正常<span class="op">0</span></button>
+      <button class="ob" onclick="selN('fa',1,this)">1 — 軽度麻痺（鼻唇溝消失・口角下垂）<span class="op">1</span></button>
+      <button class="ob" onclick="selN('fa',2,this)">2 — 部分麻痺（下顔面に明らかな麻痺）<span class="op">2</span></button>
+      <button class="ob" onclick="selN('fa',3,this)">3 — 完全麻痺（両側性 / 一側の上下顔面完全麻痺）<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">5a. 上肢運動 — 左（腕挙上 45°10秒保持）<span class="sp" id="n-al-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('al',0,this)">0 — drift なし（10秒保持可）<span class="op">0</span></button>
+      <button class="ob" onclick="selN('al',1,this)">1 — drift あり（10秒以内に下がるが接触なし）<span class="op">1</span></button>
+      <button class="ob" onclick="selN('al',2,this)">2 — 重力に抗するが 10秒保持不可<span class="op">2</span></button>
+      <button class="ob" onclick="selN('al',3,this)">3 — 重力に抗せず（ベッドに落下）<span class="op">3</span></button>
+      <button class="ob" onclick="selN('al',4,this)">4 — 全く動かない<span class="op">4</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">5b. 上肢運動 — 右<span class="sp" id="n-ar-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('ar',0,this)">0 — drift なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('ar',1,this)">1 — drift あり<span class="op">1</span></button>
+      <button class="ob" onclick="selN('ar',2,this)">2 — 重力に抗するが保持不可<span class="op">2</span></button>
+      <button class="ob" onclick="selN('ar',3,this)">3 — 重力に抗せず<span class="op">3</span></button>
+      <button class="ob" onclick="selN('ar',4,this)">4 — 全く動かない<span class="op">4</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">6a. 下肢運動 — 左（脚挙上 30°5秒保持）<span class="sp" id="n-ll-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('ll',0,this)">0 — drift なし（5秒保持可）<span class="op">0</span></button>
+      <button class="ob" onclick="selN('ll',1,this)">1 — drift あり（5秒以内に下がるが接触なし）<span class="op">1</span></button>
+      <button class="ob" onclick="selN('ll',2,this)">2 — 重力に抗するが 5秒保持不可<span class="op">2</span></button>
+      <button class="ob" onclick="selN('ll',3,this)">3 — 重力に抗せず<span class="op">3</span></button>
+      <button class="ob" onclick="selN('ll',4,this)">4 — 全く動かない<span class="op">4</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">6b. 下肢運動 — 右<span class="sp" id="n-lr-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('lr',0,this)">0 — drift なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('lr',1,this)">1 — drift あり<span class="op">1</span></button>
+      <button class="ob" onclick="selN('lr',2,this)">2 — 重力に抗するが保持不可<span class="op">2</span></button>
+      <button class="ob" onclick="selN('lr',3,this)">3 — 重力に抗せず<span class="op">3</span></button>
+      <button class="ob" onclick="selN('lr',4,this)">4 — 全く動かない<span class="op">4</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">7. 四肢運動失調（測定障害）<span class="sp" id="n-at-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('at',0,this)">0 — 失調なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('at',1,this)">1 — 1肢に存在<span class="op">1</span></button>
+      <button class="ob" onclick="selN('at',2,this)">2 — 2肢以上に存在<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">8. 感覚<span class="sp" id="n-se-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('se',0,this)">0 — 正常<span class="op">0</span></button>
+      <button class="ob" onclick="selN('se',1,this)">1 — 軽〜中等度感覚障害<span class="op">1</span></button>
+      <button class="ob" onclick="selN('se',2,this)">2 — 重度〜完全感覚障害<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">9. 最良の言語（失語）<span class="sp" id="n-la2-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('la2',0,this)">0 — 失語なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('la2',1,this)">1 — 軽〜中等度失語<span class="op">1</span></button>
+      <button class="ob" onclick="selN('la2',2,this)">2 — 重度失語<span class="op">2</span></button>
+      <button class="ob" onclick="selN('la2',3,this)">3 — 無言・全失語<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">10. 構音障害<span class="sp" id="n-dy-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('dy',0,this)">0 — 正常<span class="op">0</span></button>
+      <button class="ob" onclick="selN('dy',1,this)">1 — 軽〜中等度構音障害<span class="op">1</span></button>
+      <button class="ob" onclick="selN('dy',2,this)">2 — 重度（ほぼ理解不能）または無言<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">11. 消去現象・不注意（半側空間無視等）<span class="sp" id="n-ex-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selN('ex',0,this)">0 — 異常なし<span class="op">0</span></button>
+      <button class="ob" onclick="selN('ex',1,this)">1 — 視覚・触覚・聴覚・空間・一側性無視<span class="op">1</span></button>
+      <button class="ob" onclick="selN('ex',2,this)">2 — 重度半側無視（2つ以上の感覚）<span class="op">2</span></button>
+    </div></div>
+
+    <button class="reset" onclick="resetNIHSS()">リセット</button>
+    <div class="ref">Brott et al., Stroke 1989</div>
+  </div>
+</div>
+
+<!-- ===== PHASES ===== -->
+<div class="view" id="view-phases">
+  <div class="hdr" style="background:#44337a">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">PHASES スコア</div><div class="hdr-sub">未破裂脳動脈瘤 5年破裂リスク</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">PHASES スコア</div><div class="snum c-low" id="phases-score">0</div></div>
+        <div class="rdsp"><div class="rpct c-low" id="phases-risk">0.4%</div><div class="rlsm">5年破裂リスク</div><div class="rinterp" id="phases-interp">低リスク</div></div>
+      </div>
+    </div>
+    <div class="sec"><div class="sh sh-p">P — Population（出身地域）<span class="sp" id="p-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('P',0,this)">北米・欧州（フィンランド除く）<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('P',3,this)">日本<span class="op">+3</span></button>
+      <button class="ob" onclick="selP('P',5,this)">フィンランド<span class="op">+5</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">H — Hypertension（高血圧）<span class="sp" id="h-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('H',0,this)">なし<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('H',1,this)">あり<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">A — Age（年齢）<span class="sp" id="a-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('A',0,this)">70歳未満<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('A',1,this)">70歳以上<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">S — Size（動脈瘤径）<span class="sp" id="s1-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('S1',0,this)">&lt; 7.0 mm<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('S1',3,this)">7.0〜9.9 mm<span class="op">+3</span></button>
+      <button class="ob" onclick="selP('S1',6,this)">10.0〜19.9 mm<span class="op">+6</span></button>
+      <button class="ob" onclick="selP('S1',10,this)">≥ 20.0 mm<span class="op">+10</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">E — Earlier SAH（既往 SAH）<span class="sp" id="e-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('E',0,this)">なし<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('E',1,this)">あり（他の動脈瘤から）<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">S — Site（部位）<span class="sp" id="s2-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selP('S2',0,this)">ICA（内頸動脈）<span class="op">+0</span></button>
+      <button class="ob" onclick="selP('S2',2,this)">MCA（中大脳動脈）<span class="op">+2</span></button>
+      <button class="ob" onclick="selP('S2',2,this)">AcomA / ACA（前交通・前大脳）<span class="op">+2</span></button>
+      <button class="ob" onclick="selP('S2',4,this)">後方循環（BA・VA・PCA 等）<span class="op">+4</span></button>
+    </div></div>
+    <button class="reset" onclick="resetPhases()">リセット</button>
+    <div class="ref">Greving et al., Stroke 2014</div>
+  </div>
+</div>
+
+<!-- ===== ELAPSS ===== -->
+<div class="view" id="view-elapss">
+  <div class="hdr" style="background:#44337a">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">ELAPSS スコア</div><div class="hdr-sub">未破裂脳動脈瘤 増大リスク</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div style="display:flex;justify-content:space-around;align-items:center;text-align:center">
+        <div>
+          <div class="slbl">ELAPSS スコア</div>
+          <div class="snum c-low" id="elapss-score">0</div>
+        </div>
+        <div style="width:1px;background:#eee;align-self:stretch"></div>
+        <div>
+          <div class="slbl">3年増大リスク</div>
+          <div class="rpct c-low" id="elapss-risk3">5%</div>
+        </div>
+        <div style="width:1px;background:#eee;align-self:stretch"></div>
+        <div>
+          <div class="slbl">5年増大リスク</div>
+          <div class="rpct c-low" id="elapss-risk5">8.4%</div>
+        </div>
+      </div>
+      <div class="rinterp" style="text-align:center;max-width:none;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0" id="elapss-interp"><span style="font-weight:700">低リスク</span>（スコア &lt;5）</div>
+    </div>
+    <div class="sec"><div class="sh sh-p">E — Earlier SAH（既往 SAH）<span class="sp" id="ee-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('EE',0,this)">あり（他の動脈瘤から）<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('EE',1,this)">なし<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">L — Location（部位）<span class="sp" id="el-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('EL',0,this)">ICA / ACA / AComA<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('EL',3,this)">MCA<span class="op">+3</span></button>
+      <button class="ob" onclick="selE('EL',5,this)">PComA / 後方循環<span class="op">+5</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">A — Age（年齢）<span class="sp" id="ea-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('EA',0,this)">≤ 60歳<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('EA',1,this)">61〜65歳<span class="op">+1</span></button>
+      <button class="ob" onclick="selE('EA',2,this)">66〜70歳<span class="op">+2</span></button>
+      <button class="ob" onclick="selE('EA',3,this)">71〜75歳<span class="op">+3</span></button>
+      <button class="ob" onclick="selE('EA',4,this)">76〜80歳<span class="op">+4</span></button>
+      <button class="ob" onclick="selE('EA',5,this)">81〜85歳<span class="op">+5</span></button>
+      <button class="ob" onclick="selE('EA',6,this)">86〜90歳<span class="op">+6</span></button>
+      <button class="ob" onclick="selE('EA',7,this)">91〜95歳<span class="op">+7</span></button>
+      <button class="ob" onclick="selE('EA',8,this)">&gt; 95歳<span class="op">+8</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">P — Population（出身地域）<span class="sp" id="ep-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('EP',0,this)">その他（北米・中国・欧州＊）<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('EP',1,this)">日本<span class="op">+1</span></button>
+      <button class="ob" onclick="selE('EP',7,this)">フィンランド<span class="op">+7</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">S — Size（動脈瘤径）<span class="sp" id="es-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('ES',0,this)">1.0〜2.9 mm<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('ES',4,this)">3.0〜4.9 mm<span class="op">+4</span></button>
+      <button class="ob" onclick="selE('ES',10,this)">5.0〜6.9 mm<span class="op">+10</span></button>
+      <button class="ob" onclick="selE('ES',13,this)">7.0〜9.9 mm<span class="op">+13</span></button>
+      <button class="ob" onclick="selE('ES',22,this)">≥ 10.0 mm<span class="op">+22</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">S — Shape（形状）<span class="sp" id="esh-pts">0点</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selE('ESH',0,this)">整形（regular / smooth）<span class="op">+0</span></button>
+      <button class="ob" onclick="selE('ESH',4,this)">不整形（irregular / daughter sac）<span class="op">+4</span></button>
+    </div></div>
+    <div class="note" style="font-size:11px;color:#666;margin-top:4px">＊フィンランドを除く欧州を含む</div>
+    <button class="reset" onclick="resetElapss()">リセット</button>
+    <div class="ref">Backes et al., Neurology 2017</div>
+  </div>
+</div>
+
+<!-- ===== UCAS ===== -->
+<div class="view" id="view-ucas">
+  <div class="hdr" style="background:#44337a">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">UCAS</div><div class="hdr-sub">年間破裂率推定（日本人コホート）</div></div>
+  </div>
+  <div class="sbody">
+    <div class="note">UCAS はスコア加算方式ではなく、サイズ別年間破裂率に部位・形状の HR を乗じて推定します。<b>日本人コホート（NEJM 2012）</b>のデータを使用。</div>
+    <div class="ucas-bdg">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div class="slbl">推定年間破裂率</div><div class="ucas-rate c-low" id="ucas-rate">0.36%</div><div class="rlsm">/year</div></div>
+        <div class="rdsp"><div class="rpct" id="ucas-rp" style="font-size:18px;color:#38a169">低リスク</div><div class="rinterp" id="ucas-ri">通常経過観察</div></div>
+      </div>
+      <div class="ucas-bk" id="ucas-bk">基準：0.36%/y × 部位 HR ×1.0 × 形状 HR ×1.0 = <b>0.36%/y</b></div>
+    </div>
+    <div class="sec"><div class="sh sh-p">サイズ別 基準年間破裂率<span class="sp" id="ucas-sl">3〜4 mm</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selU('size',0.36,'3〜4 mm',this)">3〜4 mm<span class="op">0.36%/y</span></button>
+      <button class="ob" onclick="selU('size',0.50,'5〜6 mm',this)">5〜6 mm<span class="op">0.50%/y</span></button>
+      <button class="ob" onclick="selU('size',1.69,'7〜9 mm',this)">7〜9 mm<span class="op">1.69%/y</span></button>
+      <button class="ob" onclick="selU('size',4.11,'10〜24 mm',this)">10〜24 mm<span class="op">4.11%/y</span></button>
+      <button class="ob" onclick="selU('size',33.4,'≥25 mm',this)">≥25 mm<span class="op">33.4%/y</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">部位（Hazard Ratio）<span class="sp" id="ucas-ll">×1.0</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selU('loc',1.0,'ICA/MCA/ACA/AcomA',this)">ICA / MCA / ACA / AcomA<span class="op">HR ×1.0</span></button>
+      <button class="ob" onclick="selU('loc',1.90,'ICA-PC（後交通動脈起始部）',this)">ICA-PC（後交通動脈起始部）<span class="op">HR ×1.90</span></button>
+      <button class="ob" onclick="selU('loc',1.90,'脳底動脈先端部（Basilar tip）',this)">脳底動脈先端部（Basilar tip）<span class="op">HR ×1.90</span></button>
+      <button class="ob" onclick="selU('loc',1.35,'その他後方循環（VA・PICA等）',this)">その他後方循環（VA・PICA 等）<span class="op">HR ×1.35</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-p">形状（Hazard Ratio）<span class="sp" id="ucas-hl">×1.0</span></div><div class="opts">
+      <button class="ob selected sp2" onclick="selU('shape',1.0,'整形（smooth）',this)">整形（smooth）— daughter sac なし<span class="op">HR ×1.0</span></button>
+      <button class="ob" onclick="selU('shape',1.63,'不整形 / daughter sac あり',this)">不整形 / daughter sac あり<span class="op">HR ×1.63</span></button>
+    </div></div>
+    <button class="reset" onclick="resetUcas()">リセット</button>
+    <div class="ref">Morita et al., N Engl J Med 2012（UCAS Japan）</div>
+  </div>
+</div>
+
+<!-- ===== UIATS ===== -->
+<div class="view" id="view-uiats">
+  <div class="hdr" style="background:#44337a">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">UIATS</div><div class="hdr-sub">治療 vs 経過観察 判断支援</div></div>
+  </div>
+  <div class="sbody">
+    <div class="note">治療側と保存側のポイントを<b>別々に集計</b>し比較。差≥3 → 多い側を推奨 ／ 差≤2 → Inconclusive。保存側に<b>常時 +5（処置リスク）</b>が自動加算されます。</div>
+    <div class="uia-badge">
+      <div class="uia-cols">
+        <div class="uia-col uia-ct"><div class="uia-lbl">治療側ポイント</div><div class="uia-n" id="uiats-t">0</div></div>
+        <div class="uia-col uia-cc"><div class="uia-lbl">保存側ポイント（+5含む）</div><div class="uia-n" id="uiats-c">5</div></div>
+      </div>
+      <div class="uia-res uia-inc" id="uiats-res"><span>判断保留（Inconclusive）</span><div class="uia-sub" id="uiats-sub">治療 +0 vs 保存 +5（差 −5）</div></div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--blue);margin:8px 0 6px;padding-left:4px">▶ 治療に有利な因子</div>
+    <div class="sec"><div class="sh sh-b">年齢（治療側）<span class="sp" id="ut-age">0点</span></div><div class="opts">
+      <button class="ob" onclick="togT('age',4,this)">40歳未満<span class="op">+4</span></button>
+      <button class="ob" onclick="togT('age',3,this)">40〜60歳<span class="op">+3</span></button>
+      <button class="ob" onclick="togT('age',2,this)">61〜70歳<span class="op">+2</span></button>
+      <button class="ob" onclick="togT('age',1,this)">71〜80歳<span class="op">+1</span></button>
+      <button class="ob" onclick="togT('age',0,this)">80歳超<span class="op">+0</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">既往・リスク因子<span class="sp" id="ut-risk">0点</span></div><div class="opts">
+      <button class="ob" onclick="togTck('sah',4,this)">既往 SAH（他の動脈瘤から）<span class="op">+4</span></button>
+      <button class="ob" onclick="togTck('fam',3,this)">家族歴（動脈瘤・SAH）<span class="op">+3</span></button>
+      <button class="ob" onclick="togTck('smk',3,this)">現喫煙<span class="op">+3</span></button>
+      <button class="ob" onclick="togTck('eth',2,this)">日本人・フィンランド人・イヌイット<span class="op">+2</span></button>
+      <button class="ob" onclick="togTck('htn',2,this)">高血圧<span class="op">+2</span></button>
+      <button class="ob" onclick="togTck('pkd',2,this)">多発性嚢胞腎（ADPKD）<span class="op">+2</span></button>
+      <button class="ob" onclick="togTck('drg',2,this)">薬物乱用<span class="op">+2</span></button>
+      <button class="ob" onclick="togTck('alc',1,this)">アルコール乱用<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">臨床症状（動脈瘤関連）<span class="sp" id="ut-sym">0点</span></div><div class="opts">
+      <button class="ob" onclick="togTck('cn',4,this)">脳神経麻痺<span class="op">+4</span></button>
+      <button class="ob" onclick="togTck('ms',4,this)">mass effect（臨床・画像）<span class="op">+4</span></button>
+      <button class="ob" onclick="togTck('em',3,this)">血栓塞栓症状<span class="op">+3</span></button>
+      <button class="ob" onclick="togTck('ep',1,this)">てんかん発作<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">動脈瘤サイズ（治療側）<span class="sp" id="ut-sz">0点</span></div><div class="opts">
+      <button class="ob" onclick="togT('tsz',0,this)">≤ 3.9 mm<span class="op">+0</span></button>
+      <button class="ob" onclick="togT('tsz',1,this)">4.0〜6.9 mm<span class="op">+1</span></button>
+      <button class="ob" onclick="togT('tsz',2,this)">7.0〜12.9 mm<span class="op">+2</span></button>
+      <button class="ob" onclick="togT('tsz',3,this)">13.0〜24.9 mm<span class="op">+3</span></button>
+      <button class="ob" onclick="togT('tsz',4,this)">≥ 25 mm<span class="op">+4</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">動脈瘤形態<span class="sp" id="ut-mo">0点</span></div><div class="opts">
+      <button class="ob" onclick="togTck('irr',3,this)">不整形・lobulation<span class="op">+3</span></button>
+      <button class="ob" onclick="togTck('rat',1,this)">Size ratio &gt;3 または Aspect ratio &gt;1.6<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">部位<span class="sp" id="ut-lo">0点</span></div><div class="opts">
+      <button class="ob" onclick="togT('tloc',5,this)">脳底動脈先端部（BA bifurcation）<span class="op">+5</span></button>
+      <button class="ob" onclick="togT('tloc',4,this)">椎骨・脳底動脈（VA/BA）<span class="op">+4</span></button>
+      <button class="ob" onclick="togT('tloc',2,this)">AComA または PComA<span class="op">+2</span></button>
+      <button class="ob" onclick="togT('tloc',0,this)">その他（MCA・ICA 等）<span class="op">+0</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-b">その他（治療側）<span class="sp" id="ut-ot">0点</span></div><div class="opts">
+      <button class="ob" onclick="togTck('gr',4,this)">経過観察中に増大<span class="op">+4</span></button>
+      <button class="ob" onclick="togTck('dn',3,this)">経過中に de novo 形成<span class="op">+3</span></button>
+      <button class="ob" onclick="togTck('ql',2,this)">破裂恐怖による QOL 低下<span class="op">+2</span></button>
+      <button class="ob" onclick="togTck('ml',1,this)">多発動脈瘤<span class="op">+1</span></button>
+      <button class="ob" onclick="togTck('cl',1,this)">対側の狭窄/閉塞性病変<span class="op">+1</span></button>
+    </div></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--red);margin:14px 0 6px;padding-left:4px">▶ 保存的管理に有利な因子</div>
+    <div class="sec"><div class="sh sh-r">処置リスク（常時加算）<span class="sp" style="background:var(--red)">+5（固定）</span></div>
+      <div style="padding:9px 14px;font-size:12px;color:var(--gray)">すべての処置に伴う一定リスクとして保存側に常に <b>+5点</b> が自動加算されます。</div>
+    </div>
+    <div class="sec"><div class="sh sh-r">年齢（保存側）<span class="sp" id="uc-age">0点</span></div><div class="opts">
+      <button class="ob" onclick="togC('cag',0,this)">40歳未満<span class="op">+0</span></button>
+      <button class="ob" onclick="togC('cag',1,this)">40〜60歳<span class="op">+1</span></button>
+      <button class="ob" onclick="togC('cag',3,this)">61〜70歳<span class="op">+3</span></button>
+      <button class="ob" onclick="togC('cag',4,this)">71〜80歳<span class="op">+4</span></button>
+      <button class="ob" onclick="togC('cag',5,this)">80歳超<span class="op">+5</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-r">動脈瘤サイズ（保存側）<span class="sp" id="uc-sz">0点</span></div><div class="opts">
+      <button class="ob" onclick="togC('csz',0,this)">&lt; 6.0 mm<span class="op">+0</span></button>
+      <button class="ob" onclick="togC('csz',1,this)">6.0〜10.0 mm<span class="op">+1</span></button>
+      <button class="ob" onclick="togC('csz',3,this)">10.1〜20.0 mm<span class="op">+3</span></button>
+      <button class="ob" onclick="togC('csz',5,this)">&gt; 20.0 mm<span class="op">+5</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-r">余命・併存疾患<span class="sp" id="uc-co">0点</span></div><div class="opts">
+      <button class="ob" onclick="togC('lif',4,this)">余命 &lt; 5年（悪性疾患等）<span class="op">+4</span></button>
+      <button class="ob" onclick="togC('lif',3,this)">余命 5〜10年<span class="op">+3</span></button>
+      <button class="ob" onclick="togC('lif',1,this)">余命 &gt; 10年<span class="op">+1</span></button>
+      <button class="ob" onclick="togCck('nco',3,this)">神経認知障害<span class="op">+3</span></button>
+      <button class="ob" onclick="togCck('coa',2,this)">凝固障害・血栓性疾患<span class="op">+2</span></button>
+      <button class="ob" onclick="togCck('psy',2,this)">精神疾患<span class="op">+2</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-r">動脈瘤の解剖学的複雑性<span class="sp" id="uc-cx">0点</span></div><div class="opts">
+      <button class="ob" onclick="togC('cx',0,this)">低（治療難度が低い）<span class="op">+0</span></button>
+      <button class="ob" onclick="togC('cx',3,this)">高（幅広ネック・紡錘状・巨大等）<span class="op">+3</span></button>
+    </div></div>
+    <button class="reset" onclick="resetUiats()">リセット</button>
+    <div class="ref">Etminan et al., Neurology 2015</div>
+  </div>
+</div>
+
+<!-- ===== Spetzler-Martin + Modified ===== -->
+<div class="view" id="view-sm">
+  <div class="hdr" style="background:#234e52">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Spetzler-Martin / Modified</div><div class="hdr-sub">AVM 手術リスク分類（Lawton-Young 補正）</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div>
+          <div class="slbl">Spetzler&amp;Martin Grade</div>
+          <div class="snum" id="sm-grade" style="color:var(--gray)">—</div>
+        </div>
+        <div class="rdsp">
+          <div style="font-size:13px;font-weight:700;color:var(--gray)" id="sm-ponce">Spetzler-Ponce: —</div>
+          <div class="rlsm" style="margin-top:4px">手術適応クラス</div>
+        </div>
+      </div>
+      <div class="gcs-row" style="margin-top:10px;align-items:center">
+        <div class="gcs-c" style="background:var(--tel-l)"><div class="gcs-cl" style="color:var(--tel-h)">Size</div><div class="gcs-cv" style="color:var(--tel)" id="sm-sz-val">—</div></div>
+        <div style="font-size:18px;font-weight:700;color:#a0aec0;flex-shrink:0">+</div>
+        <div class="gcs-c" style="background:var(--tel-l)"><div class="gcs-cl" style="color:var(--tel-h)">Eloquence</div><div class="gcs-cv" style="color:var(--tel)" id="sm-el-val">—</div></div>
+        <div style="font-size:18px;font-weight:700;color:#a0aec0;flex-shrink:0">+</div>
+        <div class="gcs-c" style="background:var(--tel-l)"><div class="gcs-cl" style="color:var(--tel-h)">Venous</div><div class="gcs-cv" style="color:var(--tel)" id="sm-vn-val">—</div></div>
+        <div style="font-size:18px;font-weight:700;color:#a0aec0;flex-shrink:0">=</div>
+        <div class="gcs-c" style="background:var(--tel-h)"><div class="gcs-cl" style="color:rgba(255,255,255,0.8)">SM 計</div><div class="gcs-cv" style="color:white" id="sm-sum">—</div></div>
+      </div>
+      <div class="sm-row">
+        <div class="sm-box" style="background:var(--tel-l)">
+          <div class="sm-bl" style="color:var(--tel-h)">Lawton-Young 補足</div>
+          <div class="sm-bv" style="color:var(--tel)" id="ly-score">0</div>
+        </div>
+        <div class="sm-box" style="background:#f7fafc">
+          <div class="sm-bl" style="color:#4a5568">Combined Score</div>
+          <div class="sm-bv" style="color:var(--txt2)" id="sm-combined">—</div>
+        </div>
+        <div class="sm-box" style="background:#f7fafc">
+          <div class="sm-bl" style="color:#4a5568">手術リスク</div>
+          <div class="sm-bv" id="sm-risk" style="font-size:14px;color:var(--gray)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--tel-h);margin:4px 0 8px;padding-left:2px">Spetzler-Martin Grade（Size + Eloquence + Venous drainage）</div>
+    <div class="sec"><div class="sh sh-t">Size<span class="sp" id="sm-sz-pts">未選択</span></div><div class="opts">
+      <button class="ob" onclick="selSM('sz',1,this)">&lt; 3 cm（小型）<span class="op">+1</span></button>
+      <button class="ob" onclick="selSM('sz',2,this)">3〜6 cm（中型）<span class="op">+2</span></button>
+      <button class="ob" onclick="selSM('sz',3,this)">&gt; 6 cm（大型）<span class="op">+3</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-t">Eloquence<span class="sp" id="sm-el-pts">未選択</span></div><div class="opts">
+      <button class="ob" onclick="selSM('el',0,this)">Non-eloquent（前頭前野・側頭前野・小脳半球等）<span class="op">+0</span></button>
+      <button class="ob" onclick="selSM('el',1,this)">Eloquent（感覚運動野・言語野・視覚野・視床・脳幹・小脳核等）<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-t">Venous drainage<span class="sp" id="sm-vn-pts">未選択</span></div><div class="opts">
+      <button class="ob" onclick="selSM('vn',0,this)">表在性のみ（皮質静脈 → 硬膜静脈洞）<span class="op">+0</span></button>
+      <button class="ob" onclick="selSM('vn',1,this)">深部静脈あり（内大脳静脈・基底静脈・前中心小脳静脈等）<span class="op">+1</span></button>
+    </div></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--tel-h);margin:14px 0 8px;padding-left:2px">Lawton-Young 補足スコア（患者因子）</div>
+    <div class="sec"><div class="sh sh-t">年齢<span class="sp" id="ly-age-pts">0点</span></div><div class="opts">
+      <button class="ob selected st" onclick="selLY('lage',0,this)">20歳未満<span class="op">+0</span></button>
+      <button class="ob" onclick="selLY('lage',1,this)">20〜40歳<span class="op">+1</span></button>
+      <button class="ob" onclick="selLY('lage',2,this)">40歳超<span class="op">+2</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-t">病変の広がり（Diffuseness）<span class="sp" id="ly-df-pts">0点</span></div><div class="opts">
+      <button class="ob selected st" onclick="selLY('ldiff',0,this)">Compact（境界明瞭）<span class="op">+0</span></button>
+      <button class="ob" onclick="selLY('ldiff',1,this)">Diffuse（境界不明瞭）<span class="op">+1</span></button>
+    </div></div>
+    <div class="sec"><div class="sh sh-t">出血発症の有無<span class="sp" id="ly-rp-pts">0点</span></div><div class="opts">
+      <button class="ob selected st" onclick="selLY('lrupt',0,this)">出血発症あり（破裂 AVM）<span class="op">+0</span></button>
+      <button class="ob" onclick="selLY('lrupt',1,this)">出血発症なし（未破裂 AVM）<span class="op">+1</span></button>
+    </div></div>
+    <button class="reset" onclick="resetSM()">リセット</button>
+    <div class="ref">Spetzler &amp; Martin, J Neurosurg 1986 ／ Lawton &amp; Young, Neurosurgery 2003</div>
+  </div>
+</div>
+
+<!-- ===== dAVF Borden / Cognard ===== -->
+<div class="view" id="view-davf">
+  <div class="hdr" style="background:var(--tel-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Borden / Cognard 分類</div><div class="hdr-sub">硬膜動静脈瘻（dAVF）— 静脈還流パターン</div></div>
+  </div>
+  <div class="sbody">
+    <div id="davf-app"></div>
+    <div class="ref">Borden JA et al., J Neurosurg 1995 ／ Cognard C et al., Radiology 1995<br>皮質静脈還流（CVR）の有無が治療適応の主要決定因子。CVRありはType IIb以上に相当し、出血・神経症状リスクが高い。</div>
+  </div>
+</div>
+
+<!-- ===== LALWANI TS-SS dAVF ===== -->
+<div id="view-lalwani" class="view">
+  <div class="hdr" style="background:var(--tel-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">Lalwani 分類</div><div class="hdr-sub">横-S状静脈洞部 dAVF（TS-SS dAVF）</div></div>
+  </div>
+  <div class="sbody">
+    <div id="lalwani-app"></div>
+    <div class="ref">Lalwani AK et al., J Neurosurg 1993; 79(1): 11-5<br>TS-SS dAVF の後ろ向き解析。Grade 3以上（CVRあり）で hemorrhage・visual symptoms リスクが有意に上昇。</div>
+  </div>
+</div>
+
+<!-- ===== ICH SCORE ===== -->
+<div class="view" id="view-ich">
+  <div class="hdr" style="background:var(--red-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">ICH Score</div><div class="hdr-sub">自発性脳出血 30日死亡率予測</div></div>
+  </div>
+  <div class="sbody">
+    <div id="ich-app"></div>
+    <div class="ref">Hemphill JC et al., Stroke 2001; 32(4): 891–7<br>ICH scoreは予後予測ツールであり、個々の治療方針や積極的治療の差し控えを直接指示するものではありません。</div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="view" id="view-toast">
+  <div class="hdr" style="background:var(--blue-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">TOAST 分類</div><div class="hdr-sub">脳梗塞病型分類</div></div>
+  </div>
+  <div class="sbody">
+    <div id="toast-app"></div>
+    <div class="ref">Adams HP Jr et al., Stroke 1993; 24(1): 35–41<br>Trial of Org 10172 in Acute Stroke Treatment から派生した病型分類。画像・心エコー・血管評価の結果を踏まえて診断します。</div>
+  </div>
+</div>
+
+<!-- ===== ABCD2 ===== -->
+<div class="view" id="view-abcd2">
+  <div class="hdr" style="background:var(--blue-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">ABCD² スコア</div><div class="hdr-sub">TIA後 短期脳卒中リスク予測</div></div>
+  </div>
+  <div class="sbody">
+    <div id="abcd2-app"></div>
+    <div class="ref">Johnston SC et al., Lancet 2007; 369(9558): 283–92<br>2日以内の脳卒中発症リスク：0–3点 ≈ 1%、4–5点 ≈ 4%、6–7点 ≈ 8%。早期精査・入院判断の参考に。</div>
+  </div>
+</div>
+
+<!-- ===== mTICI ===== -->
+<div class="view" id="view-mtici">
+  <div class="hdr" style="background:var(--blue-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">mTICI</div><div class="hdr-sub">modified Treatment in Cerebral Ischemia — 再灌流グレード</div></div>
+  </div>
+  <div class="sbody">
+    <div id="mtici-app"></div>
+    <div class="ref">Higashida RT et al., AJNR 2003 ／ Zaidat OO et al., Stroke 2013; 44(9): 2650–63<br>mTICI ≥ 2b を "successful reperfusion"、2b–3 を "good reperfusion" とする定義が多くの試験で採用されています。</div>
+  </div>
+</div>
+
+<!-- ===== CHA2DS2-VASc ===== -->
+<div class="view" id="view-cha2ds2">
+  <div class="hdr" style="background:var(--pur-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">CHA₂DS₂-VASc</div><div class="hdr-sub">心房細動 年間脳卒中リスク評価</div></div>
+  </div>
+  <div class="sbody">
+    <div id="cha-app"></div>
+    <div class="ref">Lip GY et al., Chest 2010; 137(2): 263–72<br>ESC 2020ガイドライン：男性 ≥ 2点・女性 ≥ 3点でOAC推奨。女性の性別カテゴリ（+1点）は、他のリスク因子が1点以上ある場合にのみ意義を持ちます。</div>
+  </div>
+</div>
+
+<!-- ===== HAS-BLED ===== -->
+<div class="view" id="view-hasbled">
+  <div class="hdr" style="background:var(--red-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">HAS-BLED</div><div class="hdr-sub">抗凝固療法中 年間大出血リスク評価</div></div>
+  </div>
+  <div class="sbody">
+    <div id="has-app"></div>
+    <div class="ref">Pisters R et al., Chest 2010; 138(5): 1093–100<br>HAS-BLED ≥ 3は"高リスク"ですが、抗凝固療法の中止適応ではなく、修正可能なリスク因子の是正（高血圧・INR管理・薬剤見直し等）を促す目的で使用します。</div>
+  </div>
+</div>
+
+<!-- ===== ASPECTS / DWI-ASPECTS ===== -->
+<div class="view" id="view-aspects">
+  <div class="hdr" style="background:var(--blue-h)"><button class="back" onclick="goHome()">‹</button><div><div class="hdr-title">ASPECTS / DWI-ASPECTS</div><div class="hdr-sub">CT / MRI DWI — MCA領域 10点評価</div></div></div>
+  <div class="sbody"><div id="aspects-app"></div><div class="ref">ASPECTS: Barber et al., Lancet 2000 ／ Pexman et al., AJNR 2001<br>DWI-ASPECTS: Aoki et al., Stroke 2013（doi:10.1161/STROKEAHA.112.675470）<br>CTでは早期虚血変化、DWIでは高信号を同じ10領域で評価します。画像は領域確認用、入力は下のボタンで行います。</div></div>
+</div>
+
+<!-- ===== PC-ASPECTS ===== -->
+<div class="view" id="view-pc-aspects">
+  <div class="hdr" style="background:#2a4365"><button class="back" onclick="goHome()">‹</button><div><div class="hdr-title">PC-ASPECTS</div><div class="hdr-sub">Posterior Circulation ASPECTS</div></div></div>
+  <div class="sbody"><div id="pc-aspects-app"></div><div class="ref">Puetz et al., Stroke 2008（doi:10.1161/STROKEAHA.107.511162）<br>視床・PCA領域・小脳は左右各−1、Midbrain・Ponsは各−2。</div></div>
+</div>
+
+<!-- ===== HDS-R ===== -->
+<div class="view" id="view-hdsr">
+  <div class="hdr" style="background:var(--grn-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">長谷川式認知症スケール（HDS-R）</div><div class="hdr-sub">改訂長谷川式簡易知能評価スケール — 0〜30点</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">HDS-R 合計</div><div class="snum c-low" id="hdsr-total">0</div></div>
+        <div class="rdsp"><div class="rpct c-low" id="hdsr-interp">正常範囲</div><div class="rlsm">カットオフ ≤20点で認知症疑い</div></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sh sh-g">① 年齢<span class="sp" id="hd-1-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h1',0,this)">正解できない（2歳を超える誤差）<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h1',1,this)">正解（2歳以内の誤差）<span class="op">1</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">② 日時の見当識（年・月・日・曜日）<span class="sp" id="hd-2-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h2',0,this)">0項目正解<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h2',1,this)">1項目正解<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h2',2,this)">2項目正解<span class="op">2</span></button>
+      <button class="ob" onclick="selHD('h2',3,this)">3項目正解<span class="op">3</span></button>
+      <button class="ob" onclick="selHD('h2',4,this)">4項目すべて正解<span class="op">4</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">③ 場所の見当識<span class="sp" id="hd-3-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h3',0,this)">不正解<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h3',1,this)">ヒントあり正解<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h3',2,this)">自発的に正解<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">④ 3単語の記銘（即時再生）<span class="sp" id="hd-4-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h4',0,this)">0語正解<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h4',1,this)">1語正解<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h4',2,this)">2語正解<span class="op">2</span></button>
+      <button class="ob" onclick="selHD('h4',3,this)">3語すべて正解<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑤ 計算（100−7）<span class="sp" id="hd-5-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h5',0,this)">不正解（93も答えられない）<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h5',1,this)">93のみ正解<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h5',2,this)">93・86 両方正解<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑥ 数字の逆唱<span class="sp" id="hd-6-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h6',0,this)">3桁逆唱も不正解<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h6',1,this)">3桁のみ正解（例：6-8-2 → 2-8-6）<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h6',2,this)">4桁も正解（例：3-5-2-9 → 9-2-5-3）<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑦ 3単語の遅延再生（自発2点・ヒント1点）<span class="sp" id="hd-7-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h7',0,this)">0点（3語とも再生不可）<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h7',1,this)">1点<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h7',2,this)">2点<span class="op">2</span></button>
+      <button class="ob" onclick="selHD('h7',3,this)">3点<span class="op">3</span></button>
+      <button class="ob" onclick="selHD('h7',4,this)">4点<span class="op">4</span></button>
+      <button class="ob" onclick="selHD('h7',5,this)">5点<span class="op">5</span></button>
+      <button class="ob" onclick="selHD('h7',6,this)">6点（3語とも自発再生）<span class="op">6</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑧ 5物品記銘（隠したあと再生）<span class="sp" id="hd-8-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h8',0,this)">0個再生<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h8',1,this)">1個再生<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h8',2,this)">2個再生<span class="op">2</span></button>
+      <button class="ob" onclick="selHD('h8',3,this)">3個再生<span class="op">3</span></button>
+      <button class="ob" onclick="selHD('h8',4,this)">4個再生<span class="op">4</span></button>
+      <button class="ob" onclick="selHD('h8',5,this)">5個すべて再生<span class="op">5</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑨ 野菜の名前（1分間）<span class="sp" id="hd-9-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selHD('h9',0,this)">0個<span class="op">0</span></button>
+      <button class="ob" onclick="selHD('h9',1,this)">1個<span class="op">1</span></button>
+      <button class="ob" onclick="selHD('h9',2,this)">2個<span class="op">2</span></button>
+      <button class="ob" onclick="selHD('h9',3,this)">3個<span class="op">3</span></button>
+      <button class="ob" onclick="selHD('h9',4,this)">4個<span class="op">4</span></button>
+      <button class="ob" onclick="selHD('h9',5,this)">5個以上<span class="op">5</span></button>
+    </div></div>
+
+    <button class="reset" onclick="resetHDSR()">リセット</button>
+    <div class="ref">長谷川和夫ら，老年精神医学雑誌 1991</div>
+  </div>
+</div>
+
+<!-- ===== MMSE ===== -->
+<div class="view" id="view-mmse">
+  <div class="hdr" style="background:var(--grn-h)">
+    <button class="back" onclick="goHome()">‹</button>
+    <div><div class="hdr-title">MMSE</div><div class="hdr-sub">Mini-Mental State Examination — 0〜30点</div></div>
+  </div>
+  <div class="sbody">
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">MMSE 合計</div><div class="snum c-low" id="mmse-total">0</div></div>
+        <div class="rdsp"><div class="rpct c-low" id="mmse-interp">正常範囲</div><div class="rlsm">≤23点で認知症疑い</div></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sh sh-g">① 時間の見当識（年・季節・月・日・曜日）<span class="sp" id="mm-1-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m1',0,this)">0項目正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m1',1,this)">1項目正解<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m1',2,this)">2項目正解<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m1',3,this)">3項目正解<span class="op">3</span></button>
+      <button class="ob" onclick="selMM('m1',4,this)">4項目正解<span class="op">4</span></button>
+      <button class="ob" onclick="selMM('m1',5,this)">5項目すべて正解<span class="op">5</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">② 場所の見当識（都道府県・市区町村・病院・病棟・階）<span class="sp" id="mm-2-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m2',0,this)">0項目正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m2',1,this)">1項目正解<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m2',2,this)">2項目正解<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m2',3,this)">3項目正解<span class="op">3</span></button>
+      <button class="ob" onclick="selMM('m2',4,this)">4項目正解<span class="op">4</span></button>
+      <button class="ob" onclick="selMM('m2',5,this)">5項目すべて正解<span class="op">5</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">③ 3単語の即時記銘<span class="sp" id="mm-3-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m3',0,this)">0語正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m3',1,this)">1語正解<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m3',2,this)">2語正解<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m3',3,this)">3語すべて正解<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">④ 注意と計算（100−7 を 5 回）<span class="sp" id="mm-4-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m4',0,this)">0回正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m4',1,this)">1回正解（93）<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m4',2,this)">2回正解（93・86）<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m4',3,this)">3回正解（93・86・79）<span class="op">3</span></button>
+      <button class="ob" onclick="selMM('m4',4,this)">4回正解<span class="op">4</span></button>
+      <button class="ob" onclick="selMM('m4',5,this)">5回すべて正解（93・86・79・72・65）<span class="op">5</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑤ 3単語の遅延再生<span class="sp" id="mm-5-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m5',0,this)">0語正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m5',1,this)">1語正解<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m5',2,this)">2語正解<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m5',3,this)">3語すべて正解<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑥ 物品呼称（時計・鉛筆）<span class="sp" id="mm-6-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m6',0,this)">両方不正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m6',1,this)">どちらか一方正解<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m6',2,this)">両方正解<span class="op">2</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑦ 文章の復唱<span class="sp" id="mm-7-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m7',0,this)">不正解<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m7',1,this)">正解（「みんなで力を合わせて綱を引きます」）<span class="op">1</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑧ 3段階の口頭命令<span class="sp" id="mm-8-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m8',0,this)">0ステップ実行<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m8',1,this)">1ステップ（右手で紙を持つ）<span class="op">1</span></button>
+      <button class="ob" onclick="selMM('m8',2,this)">2ステップ（二つに折る）<span class="op">2</span></button>
+      <button class="ob" onclick="selMM('m8',3,this)">3ステップすべて実行（膝の上に置く）<span class="op">3</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑨ 書字命令（「目を閉じてください」）<span class="sp" id="mm-9-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m9',0,this)">実行できない<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m9',1,this)">読んで目を閉じる<span class="op">1</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑩ 自発書字（意味のある文を書く）<span class="sp" id="mm-10-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m10',0,this)">書けない / 意味をなさない<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m10',1,this)">主語・動詞を含む文が書ける<span class="op">1</span></button>
+    </div></div>
+
+    <div class="sec"><div class="sh sh-g">⑪ 図形模写（五角形 2 つが交差）<span class="sp" id="mm-11-p">0</span></div><div class="opts">
+      <button class="ob selected sg" onclick="selMM('m11',0,this)">正確に模写できない<span class="op">0</span></button>
+      <button class="ob" onclick="selMM('m11',1,this)">五角形 2 つが正しく交差している<span class="op">1</span></button>
+    </div></div>
+
+    <button class="reset" onclick="resetMMSE()">リセット</button>
+    <div class="ref">Folstein et al., J Psychiatr Res 1975</div>
+  </div>
+</div>
+
+<script>
+// ===== NAVIGATION =====
+function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); window.scrollTo(0,0); }
+function goHome(){ showView('home'); }
+
+// ===== ASPECTS MAPS =====
+const aspStates={
+  aspects:{side:'L',hits:new Set()},
+  pc:{hits:new Set()}
+};
+const aspNames={C:'C（尾状核）',L:'L（レンズ核）',IC:'IC（内包）',I:'I（島皮質）',M1:'M1',M2:'M2',M3:'M3',M4:'M4',M5:'M5',M6:'M6'};
+const aspFullNames={M1:'Anterior MCA cortex',M2:'Lateral MCA cortex',M3:'Posterior MCA cortex',M4:'M1 territory above BG',M5:'M2 territory above BG',M6:'M3 territory above BG',C:'Caudate nucleus',L:'Lentiform nucleus',IC:'Internal capsule',I:'Insular cortex'};
+const aspJpNames={M1:'前方MCA皮質領域',M2:'外側MCA皮質領域',M3:'後方MCA皮質領域',M4:'M1直上の皮質領域',M5:'M2直上の皮質領域',M6:'M3直上の皮質領域',C:'尾状核',L:'レンズ核',IC:'内包',I:'島皮質'};
+const aspColors={M1:'#90cdf4',M2:'#63b3ed',M3:'#4299e1',I:'#9ae6b4',C:'#fbd38d',L:'#f6ad55',IC:'#d6bcfa',M4:'#81e6d9',M5:'#4fd1c5',M6:'#38b2ac'};
+function aspDefs(){return `<defs><pattern id="asp-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#e53e3e"/><line x1="0" y1="0" x2="0" y2="7" stroke="#fff" stroke-width="2" opacity=".45"/></pattern></defs>`;}
+function aspRegion(app,key,d,label,x,y){
+  const hit=aspStates[app].hits.has(key), fill=aspColors[key];
+  const lx=400-x;
+  const txt=label?`<text class="asp-label${hit?' hit':''}" x="${lx}" y="${y}">${label}</text>`:'';
+  return `<path class="asp-region${hit?' hit':''}" data-region="${key}" d="${d}" fill="${fill}" transform="translate(400 0) scale(-1 1)" role="button" tabindex="0" aria-pressed="${hit?'true':'false'}" aria-label="${aspNames[key]} ${hit?'選択中。もう一度タップで解除':'未選択。タップで選択'}" onclick="toggleAsp('${app}','${key}')" onkeydown="aspKey(event,'${app}','${key}')"/>${txt}`;
+}
+function aspectsSVG(app){
+  return `<img class="asp-ref-img" src="assets/aspects-reference-map.png" alt="ASPECTS領域参考図">`;
+}
+const aspOrder=['C','IC','L','I','M1','M2','M3','M4','M5','M6'];
+function aspButtons(app){
+  const s=aspStates[app];
+  return `<div class="asp-btn-grid">${aspOrder.map(k=>`<button class="asp-btn ${s.hits.has(k)?'on':''}" onclick="toggleAsp('${app}','${k}')" aria-pressed="${s.hits.has(k)?'true':'false'}">${k}<small>${aspFullNames[k]}</small><small class="jp">${aspJpNames[k]}</small></button>`).join('')}</div>`;
+}
+function renderAspects(app){
+  const state=aspStates[app], title='ASPECTS / DWI-ASPECTS', root=document.getElementById('aspects-app');
+  const score=10-state.hits.size;
+  const scoreCls=score<=5?'s-bad':score<=7?'s-warn':'';
+  const chips=[...state.hits].map(k=>`<span class="asp-chip" onclick="toggleAsp('${app}','${k}')"><span class="asp-swatch" style="background:${aspColors[k]}"></span>${aspNames[k]}</span>`).join('')||'<span class="asp-empty">虚血領域が未選択です</span>';
+  const metaTxt=state.hits.size===0?'全領域正常':'<strong>−${state.hits.size}</strong> 点減点';
+  root.innerHTML=`<div class="asp-badge"><div><div class="slbl">${title}</div><div class="asp-score ${scoreCls}">${score}<small> / 10</small></div></div><div class="asp-meta">${state.hits.size===0?'全領域正常':'<strong>'+state.hits.size+'</strong> 領域を減点'}</div></div>
+    <div class="asp-card"><div class="asp-note">上の参考図で領域を確認し、下のボタンで虚血性変化のある領域を選択します（各 −1）。選択済みボタンは再タップで解除できます。</div>${aspectsSVG(app)}${aspButtons(app)}<div class="asp-selected">${chips}</div></div>
+    <button class="reset" onclick="resetAsp('${app}')">リセット</button>`;
+}
+function toggleAsp(app,key){const s=aspStates[app];s.hits.has(key)?s.hits.delete(key):s.hits.add(key);renderAspects(app);}
+function setAspSide(app,side){aspStates[app].side=side;renderAspects(app);}
+function resetAsp(app){aspStates[app].hits.clear();renderAspects(app);}
+function aspKey(e,app,key){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAsp(app,key);}}
+
+const pcNames={TL:'左視床',TR:'右視床',OL:'左PCA領域',OR:'右PCA領域',CL:'左小脳半球',CR:'右小脳半球',MB:'中脳',P:'橋'};
+const pcWeights={TL:1,TR:1,OL:1,OR:1,CL:1,CR:1,MB:2,P:2};
+const pcOrder=['TR','TL','OR','OL','CR','CL','MB','P'];
+const pcFullNames={TR:'T: right thalamus',TL:'T: left thalamus',OR:'PCA: right PCA territory',OL:'PCA: left PCA territory',CR:'C: right cerebellar hemisphere',CL:'C: left cerebellar hemisphere',MB:'M: midbrain',P:'P: pons'};
+function pcRegion(key,d,label,x,y,color){const hit=aspStates.pc.hits.has(key);return `<path class="asp-region${hit?' hit':''}" d="${d}" fill="${color}" role="button" tabindex="0" aria-label="${pcNames[key]}" onclick="togglePC('${key}')" onkeydown="pcKey(event,'${key}')"/><text class="asp-label${hit?' hit':''}" x="${x}" y="${y}">${label}</text>`;}
+function pcReferenceImage(){return `<img class="asp-ref-img" src="assets/pc-aspects-reference.png" alt="PC-ASPECTS原著領域図" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="pc-ref-missing">PC-ASPECTS原著図をここに表示します。<br><code>assets/pc-aspects-reference.png</code> を配置してください。</div>`;}
+function pcButtons(){
+  const s=aspStates.pc;
+  return `<div class="asp-btn-grid">${pcOrder.map(k=>`<button class="asp-btn ${s.hits.has(k)?'on':''}" onclick="togglePC('${k}')" aria-pressed="${s.hits.has(k)?'true':'false'}">${pcNames[k]}<small>${pcFullNames[k]}</small></button>`).join('')}</div>`;
+}
+function pcSVG(){return `<svg class="asp-map" viewBox="0 0 400 735" aria-label="PC-ASPECTS領域模式図">${aspDefs()}
+  <text class="asp-slice-title" x="200" y="20">視床・PCA領域レベル</text><text class="asp-orient" x="200" y="37">A</text>
+  <path class="asp-brain" d="M200 44 C122 37 56 64 28 112 C5 153 23 211 78 241 C121 265 164 260 200 240 C236 260 279 265 322 241 C377 211 395 153 372 112 C344 64 278 37 200 44 Z"/>
+  <path class="asp-mid" d="M200 46 C194 84 194 214 200 240" fill="none"/><path class="asp-vent" d="M197 91 C177 80 151 85 143 104 C162 102 178 112 190 128 L199 119 Z"/><path class="asp-vent" d="M203 91 C223 80 249 85 257 104 C238 102 222 112 210 128 L201 119 Z"/>
+  <path class="asp-cortex" d="M42 118 Q72 70 130 55 M36 164 Q58 211 105 241 M358 118 Q328 70 270 55 M364 164 Q342 211 295 241"/>
+  ${pcRegion('OR','M30 165 C45 218 103 253 158 251 L170 205 C124 212 87 196 62 158 Z','PCA-R',99,218,'#63b3ed')}
+  ${pcRegion('OL','M370 165 C355 218 297 253 242 251 L230 205 C276 212 313 196 338 158 Z','PCA-L',301,218,'#90cdf4')}
+  ${pcRegion('TR','M143 119 C158 103 184 104 198 127 L190 171 C163 180 139 160 137 139 Z','T-R',166,142,'#f6ad55')}
+  ${pcRegion('TL','M257 119 C242 103 216 104 202 127 L210 171 C237 180 261 160 263 139 Z','T-L',234,142,'#fbd38d')}
+  <text class="asp-orient" x="200" y="278">P</text><text class="asp-side-mark" x="52" y="258">患者右</text><text class="asp-side-mark" x="348" y="258">患者左</text>
+
+  <text class="asp-slice-title" x="200" y="310">中脳レベル</text><text class="asp-orient" x="200" y="327">A</text>
+  <path class="asp-brain" d="M200 336 C149 332 109 354 102 392 C96 425 129 456 170 463 L200 449 L230 463 C271 456 304 425 298 392 C291 354 251 332 200 336 Z"/>
+  <ellipse class="asp-vent" cx="200" cy="425" rx="16" ry="10"/><path class="asp-anat" d="M139 372 Q164 348 190 364 L178 411 Q150 416 130 397 Z"/><path class="asp-anat" d="M261 372 Q236 348 210 364 L222 411 Q250 416 270 397 Z"/>
+  ${pcRegion('MB','M126 386 C135 350 165 338 200 339 C235 338 265 350 274 386 C278 421 247 450 218 456 L200 445 L182 456 C153 450 122 421 126 386 Z','Midbrain  −2',200,389,'#9ae6b4')}
+  <text class="asp-orient" x="200" y="482">P</text>
+
+  <text class="asp-slice-title" x="200" y="516">橋・小脳レベル</text><text class="asp-orient" x="200" y="533">A</text>
+  <path class="asp-outline" d="M200 548 C163 532 124 544 102 574 C76 546 34 558 21 599 C8 641 39 696 94 706 C136 714 173 691 200 667 C227 691 264 714 306 706 C361 696 392 641 379 599 C366 558 324 546 298 574 C276 544 237 532 200 548 Z"/>
+  <path class="asp-cortex" d="M29 604 Q53 573 91 582 M24 635 Q61 666 105 671 M371 604 Q347 573 309 582 M376 635 Q339 666 295 671"/>
+  ${pcRegion('CR','M20 614 C20 573 62 551 102 574 C119 597 125 630 111 659 C90 700 41 696 24 657 Z','Cb-R',71,626,'#4fd1c5')}
+  ${pcRegion('CL','M380 614 C380 573 338 551 298 574 C281 597 275 630 289 659 C310 700 359 696 376 657 Z','Cb-L',329,626,'#81e6d9')}
+  ${pcRegion('P','M133 570 C151 543 180 539 200 552 C220 539 249 543 267 570 L256 648 C239 674 217 674 200 661 C183 674 161 674 144 648 Z','Pons  −2',200,610,'#d6bcfa')}
+  <text class="asp-orient" x="200" y="720">P</text><text class="asp-side-mark" x="52" y="705">患者右</text><text class="asp-side-mark" x="348" y="705">患者左</text>
+  </svg>`;}
+function renderPC(){const s=aspStates.pc,loss=[...s.hits].reduce((n,k)=>n+pcWeights[k],0),score=10-loss;const chips=[...s.hits].map(k=>`<span class="asp-chip">−${pcWeights[k]} ${pcNames[k]}</span>`).join('')||'<span class="asp-empty">選択された虚血領域はありません</span>';document.getElementById('pc-aspects-app').innerHTML=`<div class="asp-badge"><div><div class="slbl">PC-ASPECTS</div><div class="asp-score">${score}<small> / 10</small></div></div><div class="asp-meta"><strong>減点 −${loss}</strong>${s.hits.size} 領域を選択</div></div><div class="asp-card"><div class="asp-note">上の原著図で領域を確認し、下のボタンで虚血性変化のある領域を選択します。視床・PCA領域・小脳は左右各 −1、Midbrain・Ponsは各 −2。</div>${pcReferenceImage()}${pcButtons()}<div class="asp-selected">${chips}</div></div><button class="reset" onclick="resetPC()">リセット</button>`;}
+function togglePC(key){const s=aspStates.pc;s.hits.has(key)?s.hits.delete(key):s.hits.add(key);renderPC();}
+function resetPC(){aspStates.pc.hits.clear();renderPC();}
+function pcKey(e,key){if(e.key==='Enter'||e.key===' '){e.preventDefault();togglePC(key);}}
+renderAspects('aspects');renderPC();
+
+// ===== dAVF Borden / Cognard =====
+// State: cvr=null|true|false, sinus=null|true|false, retro=null|true|false, ectasia=null|true|false, spinal=false
+const davfQ={cvr:null,sinus:null,retro:null,ectasia:null,spinal:false};
+function davfClassify(){
+  const {cvr,sinus,retro,ectasia,spinal}=davfQ;
+  if(spinal) return {borden:cvr?(sinus!==false?'II':'III'):(cvr===false?'I':'—'),cognard:'V',risk:'high',riskTxt:'高リスク — 進行性脊髄症に注意'};
+  if(cvr===false){
+    if(retro===null) return null;
+    return retro?{borden:'I',cognard:'IIa',risk:'mod',riskTxt:'中等度リスク — 静脈洞うっ滞'}
+                :{borden:'I',cognard:'I',  risk:'low',riskTxt:'低リスク — 良性経過、経過観察可'};
+  }
+  if(cvr===true){
+    if(sinus===null) return null;
+    if(sinus===true){
+      if(retro===null) return null;
+      return retro?{borden:'II',cognard:'IIa+b',risk:'high',riskTxt:'高リスク — CVRあり・治療適応'}
+                  :{borden:'II',cognard:'IIb',   risk:'high',riskTxt:'高リスク — CVRあり・治療適応'};
+    }
+    if(sinus===false){
+      if(ectasia===null) return null;
+      return ectasia?{borden:'III',cognard:'IV', risk:'vhigh',riskTxt:'最高リスク — venous ectasiaあり・出血リスク最大'}
+                    :{borden:'III',cognard:'III', risk:'high', riskTxt:'高リスク — 皮質静脈直接還流・出血リスク'};
+    }
+  }
+  return null;
+}
+const davfBDesc={'I':'硬膜静脈洞・硬膜静脈への還流のみ','II':'硬膜静脈洞還流＋皮質静脈還流（CVR）あり','III':'皮質静脈への直接還流（洞を介さない）'};
+const davfCDesc={'I':'順行性洞還流のみ（良性）','IIa':'逆行性洞還流のみ','IIb':'順行性洞還流＋CVR','IIa+b':'逆行性洞還流＋CVR','III':'CVR直接還流・拡張なし','IV':'CVR直接還流＋venous ectasia','V':'脊髄周囲静脈への還流'};
+function setDavf(key,val){
+  davfQ[key]=val;
+  if(key==='cvr'){davfQ.sinus=null;davfQ.retro=null;davfQ.ectasia=null;}
+  if(key==='sinus'){davfQ.retro=null;davfQ.ectasia=null;}
+  renderDavf();
+}
+function resetDavf(){Object.assign(davfQ,{cvr:null,sinus:null,retro:null,ectasia:null,spinal:false});renderDavf();}
+function yn(key,val,label){
+  const on=davfQ[key]===val;
+  return `<button class="davf-yn${on?' davf-yon':''}" onclick="setDavf('${key}',${val})">${label}</button>`;
+}
+function renderDavf(){
+  const root=document.getElementById('davf-app');if(!root)return;
+  const r=davfClassify();
+  const {cvr,sinus,retro,ectasia,spinal}=davfQ;
+  let steps='';
+  // Q1: CVR?
+  steps+=`<div class="davf-step">
+    <div class="davf-qlabel">① 皮質静脈への還流（CVR）はありますか？</div>
+    <div class="davf-yns">${yn('cvr',true,'あり')}${yn('cvr',false,'なし')}</div>
+  </div>`;
+  // Q2a: if no CVR → retrograde?
+  if(cvr===false) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">② 硬膜静脈洞の血流方向は？</div>
+    <div class="davf-yns">${yn('retro',false,'順行性（antegrade）')}${yn('retro',true,'逆行性（retrograde）')}</div>
+  </div>`;
+  // Q2b: if CVR → via sinus?
+  if(cvr===true) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">② 硬膜静脈洞を介する還流もありますか？</div>
+    <div class="davf-yns">${yn('sinus',true,'あり')}${yn('sinus',false,'なし（直接還流のみ）')}</div>
+  </div>`;
+  // Q3a: sinus + CVR → retrograde?
+  if(cvr===true&&sinus===true) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">③ 硬膜静脈洞の血流方向は？</div>
+    <div class="davf-yns">${yn('retro',false,'順行性（antegrade）')}${yn('retro',true,'逆行性（retrograde）')}</div>
+  </div>`;
+  // Q3b: direct CVR → ectasia?
+  if(cvr===true&&sinus===false) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">③ 皮質静脈に venous ectasia（瘤状拡張）はありますか？</div>
+    <div class="davf-yns">${yn('ectasia',false,'なし')}${yn('ectasia',true,'あり')}</div>
+  </div>`;
+  root.innerHTML=`
+    <div class="davf-grid">
+      <div class="davf-card">
+        <div class="slbl">Borden分類</div>
+        <div class="val${r?'':' unknown'}">${r?'Type '+r.borden:'—'}</div>
+      </div>
+      <div class="davf-card">
+        <div class="slbl">Cognard分類</div>
+        <div class="val${r?'':' unknown'}">${r?'Type '+r.cognard:'—'}</div>
+      </div>
+    </div>
+    ${r?`<div class="davf-desc">
+      <div class="desc-row"><b>Borden ${r.borden}：</b><span>${davfBDesc[r.borden]||''}</span></div>
+      <div class="desc-row"><b>Cognard ${r.cognard}：</b><span>${davfCDesc[r.cognard]||''}</span></div>
+      <div style="margin-top:6px"><span class="davf-risk ${r.risk}">${r.riskTxt}</span></div>
+    </div>`:''}
+    ${steps}
+    <div class="davf-step" style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:4px">
+      <div class="davf-qlabel">脊髄周囲静脈への還流はありますか？（Cognard V）</div>
+      <div class="davf-yns">
+        <button class="davf-yn${spinal?' davf-yon':''}" onclick="davfQ.spinal=true;renderDavf()">あり</button>
+        <button class="davf-yn${!spinal?' davf-yon':''}" onclick="davfQ.spinal=false;renderDavf()">なし</button>
+      </div>
+    </div>
+    <button class="reset" onclick="resetDavf()">リセット</button>`;
+}
+renderDavf();
+
+// ===== Lalwani TS-SS dAVF =====
+const lalwaniData={
+  '1':{label:'Grade 1',desc:'Antegrade sinus drainage without venous restriction or CVR',hem:0,  vis:0,  risk:'low'},
+  '2':{label:'Grade 2',desc:'Antegrade and retrograde sinus drainage with or without CVR', hem:0,  vis:13, risk:'mod'},
+  '3':{label:'Grade 3',desc:'Retrograde sinus drainage with CVR',                          hem:31, vis:31, risk:'high'},
+  '4':{label:'Grade 4',desc:'CVR only',                                                    hem:100,vis:67, risk:'vhigh'},
+};
+const lalwaniRiskTxt={low:'Aggressive symptom 0%',mod:'Hemorrhage 0% / Visual sx 13%',high:'Hemorrhage 31% / Visual sx 31%',vhigh:'Hemorrhage 100% / Visual sx 67%'};
+const lalwaniRiskColor={low:'#276749',mod:'#744210',high:'#c53030',vhigh:'#e53e3e'};
+// State: antegrade=null|true|false, retro=null|true|false, cvr=null|true|false
+const lalwQ={antegrade:null,retro:null,cvr:null};
+function lalwaniClassify(){
+  const {antegrade,retro,cvr}=lalwQ;
+  if(antegrade===true  && retro===false) return '1';       // antegrade only, no CVR
+  if(antegrade===true  && retro===true)  return '2';       // antegrade + retrograde
+  if(antegrade===false && retro===false) return '4';       // CVR only
+  if(antegrade===false && retro===true && cvr===true)  return '3'; // retrograde + CVR
+  if(antegrade===false && retro===true && cvr===false) return 'unclassified';
+  return null;
+}
+function setLalw(key,val){
+  lalwQ[key]=val;
+  if(key==='antegrade'){lalwQ.retro=null;lalwQ.cvr=null;}
+  if(key==='retro') lalwQ.cvr=null;
+  renderLalwani();
+}
+function resetLalwani(){lalwQ.antegrade=null;lalwQ.retro=null;lalwQ.cvr=null;renderLalwani();}
+function renderLalwani(){
+  const root=document.getElementById('lalwani-app');if(!root)return;
+  const gk=lalwaniClassify();
+  const g=(gk&&gk!=='unclassified')?lalwaniData[gk]:null;
+  const {antegrade,retro,cvr}=lalwQ;
+  const lyw=(key,val,label)=>{
+    const on=lalwQ[key]===val;
+    return `<button class="davf-yn${on?' davf-yon':''}" onclick="setLalw('${key}',${val})">${label}</button>`;
+  };
+  let steps='';
+  steps+=`<div class="davf-step">
+    <div class="davf-qlabel">① 硬膜静脈洞への <strong>順行性</strong> 還流（antegrade）はありますか？</div>
+    <div class="davf-yns">${lyw('antegrade',true,'あり')}${lyw('antegrade',false,'なし')}</div>
+  </div>`;
+  if(antegrade===true) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">② <strong>逆行性</strong> 成分（retrograde）も同時にありますか？</div>
+    <div class="davf-yns">${lyw('retro',false,'なし（順行性のみ）')}${lyw('retro',true,'あり（双方向性）')}</div>
+  </div>`;
+  if(antegrade===false) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">② 洞への <strong>逆行性</strong> 還流はありますか？</div>
+    <div class="davf-yns">${lyw('retro',true,'あり')}${lyw('retro',false,'なし（CVRのみ）')}</div>
+  </div>`;
+  if(antegrade===false && retro===true) steps+=`<div class="davf-step">
+    <div class="davf-qlabel">③ CVR（皮質静脈還流）はありますか？</div>
+    <div class="davf-yns">${lyw('cvr',true,'あり → Grade 3')}${lyw('cvr',false,'なし')}</div>
+  </div>`;
+  const unclassifiedHtml=gk==='unclassified'?`<div class="davf-desc" style="margin-bottom:14px;border-left:3px solid #e2e8f0">
+    <div style="font-size:13px;font-weight:700;color:#4a5568;margin-bottom:4px">Lalwani分類では未定義のパターン</div>
+    <div style="font-size:12px;color:#718096;line-height:1.7">逆行性洞還流あり・CVRなし のパターンは、Lalwani分類（1993）に明示的なカテゴリがありません。<br>Borden / Cognard 分類では <strong style="color:#234e52">Borden Type I / Cognard Type IIa</strong> に相当します。</div>
+  </div>`:'';
+  const resultHtml=g?`
+    <div class="davf-card" style="margin-bottom:14px;text-align:left">
+      <div class="slbl">Lalwani分類</div>
+      <div class="val" style="font-size:38px;margin-bottom:4px">${g.label}</div>
+      <div style="font-size:11px;font-style:italic;color:#4a5568;margin-bottom:10px">"${g.desc}"</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:#718096;margin-bottom:2px">Hemorrhage</div>
+          <div style="font-size:32px;font-weight:800;color:${g.hem===0?'#276749':'#c53030'};line-height:1">${g.hem}%</div>
+        </div>
+        <div style="text-align:center;background:white;border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:#718096;margin-bottom:2px">Visual symptoms</div>
+          <div style="font-size:32px;font-weight:800;color:${g.vis===0?'#276749':'#2b6cb0'};line-height:1">${g.vis}%</div>
+        </div>
+      </div>
+    </div>`:'';
+  root.innerHTML=`${resultHtml}${unclassifiedHtml}${steps}<button class="reset" onclick="resetLalwani()">リセット</button>`;
+}
+renderLalwani();
+
+// ===== ICH SCORE =====
+const ichMort=[0,13,26,72,97,100,100];
+const ichState={gcs:null,vol:null,ivh:null,origin:null,age:null};
+function selIch(k,v){ichState[k]=v;renderIch();}
+function resetIch(){Object.keys(ichState).forEach(k=>ichState[k]=null);renderIch();}
+function renderIch(){
+  const root=document.getElementById('ich-app');if(!root)return;
+  const vals=Object.values(ichState);
+  const done=vals.every(v=>v!==null);
+  const total=done?vals.reduce((a,b)=>a+b,0):null;
+  const mort=total!==null?ichMort[Math.min(total,6)]:null;
+  const mortColor=mort===null?'#718096':mort>=72?'#c53030':mort>=26?'#d69e2e':'#276749';
+  const ibtn=(k,v,label,pts)=>{
+    const on=ichState[k]===v;
+    return `<button class="ob${on?' selected sb':''}" onclick="selIch('${k}',${v})">${label}<span class="op">${pts>0?'+'+pts:'±0'}</span></button>`;
+  };
+  root.innerHTML=`
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">ICH Score</div><div class="snum">${total!==null?total:'—'}</div></div>
+        <div class="rdsp">
+          <div class="slbl">30日死亡率</div>
+          <div class="rpct" style="color:${mortColor}">${mort!==null?mort+'%':'—'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sh sh-r">GCS（来院時）</div><div class="opts">
+      ${ibtn('gcs',0,'13–15',0)}${ibtn('gcs',1,'5–12',1)}${ibtn('gcs',2,'3–4',2)}
+    </div></div>
+    <div class="sec"><div class="sh sh-r">ICH volume</div><div class="opts">
+      ${ibtn('vol',0,'&lt; 30 cm³',0)}${ibtn('vol',1,'≥ 30 cm³',1)}
+    </div></div>
+    <div class="sec"><div class="sh sh-r">脳室内出血（IVH）</div><div class="opts">
+      ${ibtn('ivh',0,'なし',0)}${ibtn('ivh',1,'あり',1)}
+    </div></div>
+    <div class="sec"><div class="sh sh-r">出血部位</div><div class="opts">
+      ${ibtn('origin',0,'天幕上（大脳）',0)}${ibtn('origin',1,'天幕下（小脳・脳幹）',1)}
+    </div></div>
+    <div class="sec"><div class="sh sh-r">年齢</div><div class="opts">
+      ${ibtn('age',0,'&lt; 80歳',0)}${ibtn('age',1,'≥ 80歳',1)}
+    </div></div>
+    <button class="reset" onclick="resetIch()">リセット</button>`;
+}
+renderIch();
+
+// ===== TOAST 分類 =====
+const toastTypes=[
+  {key:'laa', short:'LAA',    name:'Large-artery atherosclerosis',   ja:'大動脈アテローム硬化',
+   criteria:'主幹動脈（ICA・MCA・VA・BA）の50%以上の狭窄または閉塞。皮質梗塞または直径 >1.5 cm の皮質下梗塞。心原性・ラクナ原因を除外。'},
+  {key:'ce',  short:'CE',     name:'Cardioembolism',                 ja:'心原性塞栓症',
+   criteria:'高リスク（心房細動・人工弁・IE・心房粘液腫等）または中リスク心原性塞栓源の証明。LAA を除外。'},
+  {key:'svo', short:'SVO',    name:'Small-vessel occlusion',         ja:'小血管病変（ラクナ）',
+   criteria:'直径 ≤1.5 cm の純粋ラクナ症候群。穿通枝梗塞。大動脈・心原性病変なし。'},
+  {key:'other',short:'Other', name:'Other determined etiology',      ja:'他の明確な原因',
+   criteria:'血管解離・血管炎・もやもや病・CADASIL・過凝固状態など、稀な原因による梗塞が証明されている。'},
+  {key:'undet',short:'Undet', name:'Undetermined etiology',          ja:'原因不明（cryptogenic）',
+   criteria:'① 2つ以上の原因が同定　② 精査不十分で原因特定に至らない　③ 精査を完了したが原因不明（cryptogenic stroke）'},
+];
+let toastSel=null;
+function selToast(key){toastSel=toastSel===key?null:key;renderToast();}
+function renderToast(){
+  const root=document.getElementById('toast-app');if(!root)return;
+  const t=toastTypes.find(x=>x.key===toastSel);
+  const colors={laa:'#2b6cb0',ce:'#6b46c1',svo:'#276749',other:'#744210',undet:'#718096'};
+  const cards=toastTypes.map(tt=>{
+    const on=toastSel===tt.key;
+    const c=colors[tt.key];
+    return `<button class="ob${on?' selected sb':''}" style="display:block;width:100%;text-align:left;margin-bottom:6px;padding:11px 12px;flex-direction:column;align-items:flex-start;gap:0" onclick="selToast('${tt.key}')">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <span style="font-size:11px;font-weight:800;min-width:42px;padding:2px 6px;border-radius:4px;background:${on?'rgba(255,255,255,.35)':'#f0f4f8'};color:${on?'inherit':c}">${tt.short}</span>
+        <span style="font-size:13px;font-weight:700">${tt.name}</span>
+      </div>
+      <div style="font-size:11px;color:${on?'inherit':'#718096'};margin-top:4px;margin-left:50px">${tt.ja}</div>
+    </button>`;
+  }).join('');
+  root.innerHTML=`${t?`<div class="davf-desc" style="margin-bottom:14px">
+    <div style="font-size:12px;font-weight:700;color:#2b6cb0;margin-bottom:5px">${t.short} — ${t.name}</div>
+    <div style="font-size:12px;color:#4a5568;line-height:1.75">${t.criteria}</div>
+  </div>`:'<div class="davf-hint">病型を選択してください</div>'}
+  ${cards}`;
+}
+renderToast();
+
+// ===== ABCD² =====
+const abcd2State={age:null,bp:null,clin:null,dur:null,dm:null};
+function selAbcd2(k,v){abcd2State[k]=v;renderAbcd2();}
+function resetAbcd2(){Object.keys(abcd2State).forEach(k=>abcd2State[k]=null);renderAbcd2();}
+function renderAbcd2(){
+  const root=document.getElementById('abcd2-app');if(!root)return;
+  const vals=Object.values(abcd2State);
+  const done=vals.every(v=>v!==null);
+  const total=done?vals.reduce((a,b)=>a+b,0):null;
+  let riskLabel='',riskPct='',riskColor='#718096';
+  if(total!==null){
+    if(total<=3){riskLabel='低リスク';riskPct='≈ 1%';riskColor='#276749';}
+    else if(total<=5){riskLabel='中等度リスク';riskPct='≈ 4%';riskColor='#d69e2e';}
+    else{riskLabel='高リスク';riskPct='≈ 8%';riskColor='#c53030';}
+  }
+  const abtn=(k,v,label,pts)=>{
+    const on=abcd2State[k]===v;
+    return `<button class="ob${on?' selected sb':''}" onclick="selAbcd2('${k}',${v})">${label}<span class="op">${pts>0?'+'+pts:'±0'}</span></button>`;
+  };
+  root.innerHTML=`
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">ABCD²</div><div class="snum">${total!==null?total:'—'}<span style="font-size:16px;color:var(--gray);font-weight:600"> / 7</span></div></div>
+        <div class="rdsp">
+          <div class="slbl">2日以内脳卒中リスク</div>
+          <div class="rpct" style="color:${riskColor}">${riskPct||'—'}</div>
+          ${riskLabel?`<div class="rlsm">${riskLabel}</div>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sh sh-b">A — 年齢（Age）</div><div class="opts">
+      ${abtn('age',0,'&lt; 60歳',0)}${abtn('age',1,'≥ 60歳',1)}
+    </div></div>
+    <div class="sec"><div class="sh sh-b">B — 血圧（Blood pressure）</div><div class="opts">
+      ${abtn('bp',0,'収縮期 &lt; 140 mmHg かつ 拡張期 &lt; 90 mmHg',0)}${abtn('bp',1,'収縮期 ≥ 140 mmHg または 拡張期 ≥ 90 mmHg',1)}
+    </div></div>
+    <div class="sec"><div class="sh sh-b">C — 臨床症状（Clinical features）</div><div class="opts">
+      ${abtn('clin',0,'その他の症状',0)}${abtn('clin',1,'言語障害のみ（麻痺なし）',1)}${abtn('clin',2,'片側麻痺',2)}
+    </div></div>
+    <div class="sec"><div class="sh sh-b">D — 持続時間（Duration）</div><div class="opts">
+      ${abtn('dur',0,'&lt; 10分',0)}${abtn('dur',1,'10–59分',1)}${abtn('dur',2,'≥ 60分',2)}
+    </div></div>
+    <div class="sec"><div class="sh sh-b">D — 糖尿病（Diabetes mellitus）</div><div class="opts">
+      ${abtn('dm',0,'なし',0)}${abtn('dm',1,'あり',1)}
+    </div></div>
+    <button class="reset" onclick="resetAbcd2()">リセット</button>`;
+}
+renderAbcd2();
+
+// ===== mTICI =====
+const mTICIGrades=[
+  {key:'0',  label:'0',  color:'#c53030', desc:'No perfusion. No antegrade flow beyond the point of occlusion.', ja:'灌流なし。閉塞部より遠位への血流なし。'},
+  {key:'1',  label:'1',  color:'#dd6b20', desc:'Penetration with minimal perfusion. Contrast passes the obstruction but fails to opacify the entire territory.', ja:'貫通あり・灌流最小限。造影剤は通過するが遠位血管床を十分に灌流しない。'},
+  {key:'2a', label:'2a', color:'#d69e2e', desc:'Partial filling of less than half (<50%) of the expected territory.', ja:'部分灌流。期待される血管支配域の 50% 未満が造影される。'},
+  {key:'2b', label:'2b', color:'#2b6cb0', desc:'Partial filling of more than half (≥50%) of the expected territory.', ja:'部分灌流。期待される血管支配域の 50% 以上が造影される。'},
+  {key:'2c', label:'2c', color:'#276749', desc:'Near-complete perfusion except for slow flow in a few distal cortical vessels or small distal cortical emboli.', ja:'ほぼ完全な灌流。一部の遠位皮質血管の緩徐な血流または小さな遠位塞栓を除く。'},
+  {key:'3',  label:'3',  color:'#22543d', desc:'Complete perfusion. Antegrade flow into all distal branches with filling of all cortical vessels.', ja:'完全灌流。全遠位枝への順行性血流、全皮質血管の造影。'},
+];
+let mTICISel=null;
+function selMtici(key){mTICISel=mTICISel===key?null:key;renderMtici();}
+function renderMtici(){
+  const root=document.getElementById('mtici-app');if(!root)return;
+  const g=mTICIGrades.find(x=>x.key===mTICISel);
+  const isGood=mTICISel==='2b'||mTICISel==='2c'||mTICISel==='3';
+  const gradeButtons=mTICIGrades.map(mg=>{
+    const on=mTICISel===mg.key;
+    return `<button class="ob${on?' selected sb':''}" style="justify-content:center;font-size:20px;font-weight:800;color:${on?'inherit':mg.color};padding:10px 6px;min-height:48px" onclick="selMtici('${mg.key}')">${mg.label}</button>`;
+  }).join('');
+  root.innerHTML=`
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">mTICI Grade</div><div class="snum" style="font-size:52px">${mTICISel||'—'}</div></div>
+        <div class="rdsp">
+          ${g?`<div class="slbl">再灌流評価</div>
+          <div class="rpct" style="color:${isGood?'#276749':'#c53030'}">${isGood?'成功':'不十分'}</div>
+          <div class="rlsm">${mTICISel==='3'?'Complete（mTICI 3）':mTICISel==='2c'?'Near-complete（2c）':mTICISel==='2b'?'Good（≥2b）':mTICISel==='2a'?'Partial <50%':'Minimal / No flow'}</div>
+          `:''}
+        </div>
+      </div>
+    </div>
+    ${g?`<div class="davf-desc" style="margin-bottom:12px">
+      <div style="font-size:11px;font-style:italic;color:#4a5568;line-height:1.7;margin-bottom:5px">"${g.desc}"</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.6">${g.ja}</div>
+    </div>`:'<div class="davf-hint">Grade を選択してください</div>'}
+    <div class="sec"><div class="sh sh-b">Grade 選択</div>
+      <div class="opts" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px">${gradeButtons}</div>
+    </div>`;
+}
+renderMtici();
+
+// ===== CHA₂DS₂-VASc =====
+// age: 0=<65, 1=65–74(+1), 2=≥75(+2)
+const chaState={chf:false,htn:false,age:0,dm:false,stroke:false,vasc:false,female:false};
+// Annual stroke risk % by score 0–9 (Lip et al. Chest 2010 / Euro Heart Survey)
+const chaRisk=[0,1.3,2.2,3.2,4.0,6.7,9.8,9.6,12.5,15.2];
+function togCha(k){
+  if(k==='age'){return;} // handled separately
+  chaState[k]=!chaState[k];renderCha();
+}
+function selChaAge(v){chaState.age=chaState.age===v?0:v;renderCha();}
+function resetCha(){Object.keys(chaState).forEach(k=>chaState[k]=k==='age'?0:false);renderCha();}
+function renderCha(){
+  const root=document.getElementById('cha-app');if(!root)return;
+  const {chf,htn,age,dm,stroke,vasc,female}=chaState;
+  const total=(chf?1:0)+(htn?1:0)+age+(dm?1:0)+(stroke?2:0)+(vasc?1:0)+(female?1:0);
+  const risk=chaRisk[Math.min(total,9)];
+  const riskColor=risk>=9.8?'#c53030':risk>=4.0?'#d69e2e':risk>=1.3?'#2b6cb0':'#276749';
+  // ESC 2020: OAC if male ≥2, female ≥3 (net clinical benefit threshold)
+  const oac=female?total>=3:total>=2;
+  const chk=(k,label,pts,on)=>`<button class="ob${on?' selected sb':''}" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:5px;flex-direction:column;align-items:flex-start" onclick="${k==='chf'||k==='htn'||k==='dm'||k==='stroke'||k==='vasc'||k==='female'?`togCha('${k}')`:''}">
+    <div style="display:flex;align-items:center;width:100%;gap:6px">
+      <span style="font-size:11px;font-weight:800;background:${on?'rgba(255,255,255,.35)':'#f0f4f8'};color:${on?'inherit':'#2b6cb0'};border-radius:4px;padding:1px 6px;min-width:30px;text-align:center">${pts>0?'+'+pts:pts===2?'+2':'+0'}</span>
+      <span>${label}</span>
+    </div>
+  </button>`;
+  const ageBtns=`<div class="davf-yns" style="margin-bottom:5px">
+    <button class="davf-yn${age===1?' davf-yon':''}" onclick="selChaAge(1)">65–74歳 <small>（+1）</small></button>
+    <button class="davf-yn${age===2?' davf-yon':''}" onclick="selChaAge(2)">≥ 75歳 <small>（+2）</small></button>
+    <button class="davf-yn${age===0?' davf-yon':''}" onclick="selChaAge(0)">&lt; 65歳 <small>（+0）</small></button>
+  </div>`;
+  root.innerHTML=`
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">CHA₂DS₂-VASc</div><div class="snum">${total}<span style="font-size:16px;color:var(--gray);font-weight:600"> / 9</span></div></div>
+        <div class="rdsp">
+          <div class="slbl">年間脳卒中リスク</div>
+          <div class="rpct" style="color:${riskColor}">${risk}%</div>
+          <div class="rlsm">${oac?'OAC 推奨':'OAC 要検討'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sh sh-p">C — 心不全 / 左室機能低下 <span class="sp">+1</span></div><div class="opts">${chk('chf','Congestive heart failure / LV dysfunction',1,chf)}</div></div>
+    <div class="sec"><div class="sh sh-p">H — 高血圧 <span class="sp">+1</span></div><div class="opts">${chk('htn','Hypertension（治療中または安静時 BP > 160/90）',1,htn)}</div></div>
+    <div class="sec"><div class="sh sh-p">A₂ / A — 年齢 <span class="sp">+1 / +2</span></div><div class="opts" style="padding:8px">${ageBtns}</div></div>
+    <div class="sec"><div class="sh sh-p">D — 糖尿病 <span class="sp">+1</span></div><div class="opts">${chk('dm','Diabetes mellitus',1,dm)}</div></div>
+    <div class="sec"><div class="sh sh-p">S₂ — 脳卒中 / TIA 既往 <span class="sp">+2</span></div><div class="opts">${chk('stroke','Stroke / TIA / 血栓塞栓症の既往',2,stroke)}</div></div>
+    <div class="sec"><div class="sh sh-p">V — 血管疾患 <span class="sp">+1</span></div><div class="opts">${chk('vasc','Vascular disease（既往MI・PAD・大動脈プラーク）',1,vasc)}</div></div>
+    <div class="sec"><div class="sh sh-p">Sc — 性別（女性）<span class="sp">+1</span></div><div class="opts">${chk('female','Sex category female',1,female)}</div></div>
+    <button class="reset" onclick="resetCha()">リセット</button>`;
+}
+renderCha();
+
+// ===== HAS-BLED =====
+// Annual major bleeding risk % by score (Pisters et al. Chest 2010)
+const hasRisk=[1.13,1.02,1.88,3.74,8.70,12.50,12.50,12.50,12.50,12.50];
+const hasState={htn:false,renal:false,liver:false,stroke:false,bleed:false,inr:false,elderly:false,drugs:false,alcohol:false};
+function togHas(k){hasState[k]=!hasState[k];renderHas();}
+function resetHas(){Object.keys(hasState).forEach(k=>hasState[k]=false);renderHas();}
+function renderHas(){
+  const root=document.getElementById('has-app');if(!root)return;
+  const total=Math.min(Object.values(hasState).filter(Boolean).length,9);
+  const risk=hasRisk[total];
+  const high=total>=3;
+  const riskColor=total>=4?'#c53030':total>=3?'#d69e2e':'#276749';
+  const hchk=(k,label)=>{
+    const on=hasState[k];
+    return `<button class="ob${on?' selected sr':''}" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:5px" onclick="togHas('${k}')">
+      <span style="float:right;font-size:11px;font-weight:700;color:${on?'inherit':'#a0aec0'};margin-left:8px">+1</span>${label}
+    </button>`;
+  };
+  root.innerHTML=`
+    <div class="rbadge">
+      <div class="rrow">
+        <div><div class="slbl">HAS-BLED</div><div class="snum">${total}<span style="font-size:16px;color:var(--gray);font-weight:600"> / 9</span></div></div>
+        <div class="rdsp">
+          <div class="slbl">年間大出血リスク</div>
+          <div class="rpct" style="color:${riskColor}">${risk}%</div>
+          <div class="rlsm">${high?'高出血リスク（≥ 3）':'低〜中出血リスク'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sh sh-r">H — 高血圧</div><div class="opts">${hchk('htn','Hypertension（収縮期 > 160 mmHg）')}</div></div>
+    <div class="sec"><div class="sh sh-r">A — 腎・肝機能障害（各 +1、最大 +2）</div><div class="opts">
+      ${hchk('renal','腎機能障害（透析・腎移植・血清Cr ≥ 200 µmol/L）')}
+      ${hchk('liver','肝機能障害（慢性肝疾患・ビリルビン > 2倍 + AST/ALT/ALP > 3倍）')}
+    </div></div>
+    <div class="sec"><div class="sh sh-r">S — 脳卒中既往</div><div class="opts">${hchk('stroke','Stroke history（脳卒中既往）')}</div></div>
+    <div class="sec"><div class="sh sh-r">B — 出血既往 / 出血素因</div><div class="opts">${hchk('bleed','Bleeding history or predisposition（出血既往・貧血・出血素因）')}</div></div>
+    <div class="sec"><div class="sh sh-r">L — 不安定 INR</div><div class="opts">${hchk('inr','Labile INR（治療域 TTR < 60%、不安定なINR）')}</div></div>
+    <div class="sec"><div class="sh sh-r">E — 高齢</div><div class="opts">${hchk('elderly','Elderly（年齢 > 65歳）')}</div></div>
+    <div class="sec"><div class="sh sh-r">D — 薬剤・アルコール（各 +1、最大 +2）</div><div class="opts">
+      ${hchk('drugs','Drugs（抗血小板薬 / NSAIDs 使用）')}
+      ${hchk('alcohol','Alcohol（アルコール ≥ 8杯 / 週）')}
+    </div></div>
+    <button class="reset" onclick="resetHas()">リセット</button>`;
+}
+renderHas();
+
+// ===== GCS =====
+const gcsV={E:1,V:1,M:1};
+function selGCS(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sb'));
+  btn.classList.add('selected','sb');
+  gcsV[k]=v;
+  updGCS();
+}
+function updGCS(){
+  const t=gcsV.E+gcsV.V+gcsV.M;
+  document.getElementById('gcs-total').textContent=t;
+  document.getElementById('gcs-e').textContent=gcsV.E;
+  document.getElementById('gcs-v').textContent=gcsV.V;
+  document.getElementById('gcs-m').textContent=gcsV.M;
+  document.getElementById('gcs-e-pts').textContent=gcsV.E+'点';
+  document.getElementById('gcs-v-pts').textContent=gcsV.V+'点';
+  document.getElementById('gcs-m-pts').textContent=gcsV.M+'点';
+  const ti=document.getElementById('gcs-total');
+  const ii=document.getElementById('gcs-interp');
+  ti.className='snum';
+  if(t<=8){ti.classList.add('c-vhigh');ii.textContent='重症（≤8）';ii.className='rpct c-vhigh';}
+  else if(t<=12){ti.classList.add('c-high');ii.textContent='中等症（9–12）';ii.className='rpct c-high';}
+  else{ti.classList.add('c-low');ii.textContent='軽症（13–15）';ii.className='rpct c-low';}
+}
+function resetGCS(){
+  gcsV.E=1;gcsV.V=1;gcsV.M=1;
+  document.querySelectorAll('#view-gcs .ob').forEach(b=>b.classList.remove('selected','sb'));
+  ['#view-gcs .sec:nth-child(2) .ob:last-child','#view-gcs .sec:nth-child(3) .ob:last-child','#view-gcs .sec:nth-child(4) .ob:last-child'].forEach(s=>{
+    const el=document.querySelector(s); if(el)el.classList.add('selected','sb');
+  });
+  updGCS();
+}
+updGCS();
+
+// ===== GRADE PICKER HELPERS =====
+function _setGBadge(pfx,num,title,desc,riskTxt,riskCls,numColor){
+  document.getElementById(pfx+'-num').textContent=num;
+  document.getElementById(pfx+'-num').style.color=numColor||'#2b6cb0';
+  document.getElementById(pfx+'-title').textContent=title;
+  document.getElementById(pfx+'-title').style.color=numColor||'#2b6cb0';
+  const d=document.getElementById(pfx+'-desc');
+  d.textContent=desc; d.style.display='block';
+  const r=document.getElementById(pfx+'-risk');
+  r.textContent=riskTxt; r.className='grisk '+riskCls; r.style.display='inline-block';
+}
+function resetGrade(pfx){
+  document.querySelectorAll('#view-'+pfx+' .ob').forEach(b=>b.classList.remove('selected','sb','sr','sg'));
+  document.getElementById(pfx+'-num').textContent='—'; document.getElementById(pfx+'-num').style.color='#718096';
+  document.getElementById(pfx+'-title').textContent='グレードを選択してください'; document.getElementById(pfx+'-title').style.color='#718096';
+  document.getElementById(pfx+'-desc').style.display='none';
+  document.getElementById(pfx+'-risk').style.display='none';
+}
+
+// ===== Hunt & Hess =====
+const hhColors=['#718096','#38a169','#d69e2e','#d69e2e','#e53e3e','#9b2335'];
+function selHH(g,btn,title,desc,risk,rc){
+  document.querySelectorAll('#view-hh .ob').forEach(b=>b.classList.remove('selected','sb'));
+  btn.classList.add('selected','sb');
+  _setGBadge('hh','Grade '+g,title,desc,risk,rc,hhColors[g]);
+}
+
+// ===== WFNS =====
+function selWFNS(g,btn,title,desc,risk,rc){
+  document.querySelectorAll('#view-wfns .ob').forEach(b=>b.classList.remove('selected','sb'));
+  btn.classList.add('selected','sb');
+  _setGBadge('wfns','Grade '+g,title,desc,risk,rc,hhColors[Math.min(g,5)]);
+}
+
+// ===== Fisher =====
+const fishColors={1:'#38a169',2:'#d69e2e',3:'#e53e3e',4:'#d69e2e'};
+function selFisher(g,btn,desc,risk,rc){
+  document.querySelectorAll('#view-fisher .ob').forEach(b=>b.classList.remove('selected','sr'));
+  btn.classList.add('selected','sr');
+  _setGBadge('fisher','Grade '+g,'',desc,risk,rc,fishColors[g]);
+  document.getElementById('fisher-title').textContent='';
+}
+
+// ===== Modified Fisher =====
+const mfColors={0:'#38a169',1:'#38a169',2:'#d69e2e',3:'#e53e3e',4:'#9b2335'};
+function selMF(g,btn,desc,risk,rc){
+  document.querySelectorAll('#view-modfisher .ob').forEach(b=>b.classList.remove('selected','sr'));
+  btn.classList.add('selected','sr');
+  _setGBadge('mf','Grade '+g,'',desc,risk,rc,mfColors[g]);
+  document.getElementById('mf-title').textContent='';
+}
+
+// ===== mRS =====
+const mrsColors={0:'#38a169',1:'#38a169',2:'#d69e2e',3:'#d69e2e',4:'#e53e3e',5:'#9b2335',6:'#4a5568'};
+function selMRS(g,btn,desc,risk,rc){
+  document.querySelectorAll('#view-mrs .ob').forEach(b=>b.classList.remove('selected','sg'));
+  btn.classList.add('selected','sg');
+  _setGBadge('mrs',g,'',desc,risk,rc,mrsColors[g]);
+  document.getElementById('mrs-title').textContent='';
+}
+
+// ===== NIHSS =====
+const nv={la:0,lb:0,lc:0,gz:0,vi:0,fa:0,al:0,ar:0,ll:0,lr:0,at:0,se:0,la2:0,dy:0,ex:0};
+const nids={la:'n-la-p',lb:'n-lb-p',lc:'n-lc-p',gz:'n-gz-p',vi:'n-vi-p',fa:'n-fa-p',al:'n-al-p',ar:'n-ar-p',ll:'n-ll-p',lr:'n-lr-p',at:'n-at-p',se:'n-se-p',la2:'n-la2-p',dy:'n-dy-p',ex:'n-ex-p'};
+function selN(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sg'));
+  btn.classList.add('selected','sg');
+  nv[k]=v;
+  const el=document.getElementById(nids[k]); if(el)el.textContent=v;
+  updNIHSS();
+}
+function updNIHSS(){
+  const t=Object.values(nv).reduce((a,b)=>a+b,0);
+  const te=document.getElementById('nihss-total');
+  const se=document.getElementById('nihss-sev');
+  te.textContent=t;
+  if(t===0){te.className='snum c-none';se.textContent='症状なし';se.className='rpct c-none';}
+  else if(t<=4){te.className='snum c-low';se.textContent='軽症（1–4）';se.className='rpct c-low';}
+  else if(t<=15){te.className='snum c-mid';se.textContent='中等症（5–15）';se.className='rpct c-mid';}
+  else if(t<=20){te.className='snum c-high';se.textContent='中〜重症（16–20）';se.className='rpct c-high';}
+  else{te.className='snum c-vhigh';se.textContent='重症（21–42）';se.className='rpct c-vhigh';}
+}
+function resetNIHSS(){
+  Object.keys(nv).forEach(k=>nv[k]=0);
+  document.querySelectorAll('#view-nihss .ob').forEach(b=>b.classList.remove('selected','sg'));
+  document.querySelectorAll('#view-nihss .opts').forEach(o=>{ const f=o.querySelector('.ob'); if(f)f.classList.add('selected','sg'); });
+  Object.values(nids).forEach(id=>{ const e=document.getElementById(id); if(e)e.textContent=0; });
+  updNIHSS();
+}
+
+// ===== PHASES =====
+const pv={P:0,H:0,A:0,S1:0,E:0,S2:0};
+const pids={P:'p-pts',H:'h-pts',A:'a-pts',S1:'s1-pts',E:'e-pts',S2:'s2-pts'};
+const pRisk={0:'0.4%',1:'0.5%',2:'0.6%',3:'0.8%',4:'1.1%',5:'1.4%',6:'1.9%',7:'2.5%',8:'3.3%',9:'4.3%',10:'5.5%',11:'7.2%',12:'9.4%'};
+function selP(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sp2'));
+  btn.classList.add('selected','sp2');
+  pv[k]=v; updPhases();
+}
+function updPhases(){
+  const t=Object.values(pv).reduce((a,b)=>a+b,0);
+  document.getElementById('phases-score').textContent=t;
+  Object.entries(pv).forEach(([k,v])=>{ const e=document.getElementById(pids[k]); if(e)e.textContent=v+'点'; });
+  const rp=t>=13?'≥12.4%':(pRisk[t]||'0.4%');
+  const re=document.getElementById('phases-risk'), ie=document.getElementById('phases-interp');
+  re.textContent=rp; re.className='rpct';
+  const sc=document.getElementById('phases-score'); sc.className='snum';
+  if(t<=3){re.classList.add('c-low');ie.textContent='低リスク';sc.classList.add('c-low');}
+  else if(t<=6){re.classList.add('c-mid');ie.textContent='中リスク';sc.classList.add('c-mid');}
+  else if(t<=10){re.classList.add('c-high');ie.textContent='高リスク — 治療を積極的に検討';sc.classList.add('c-high');}
+  else{re.classList.add('c-vhigh');ie.textContent='非常に高リスク — 治療を強く推奨';sc.classList.add('c-vhigh');}
+}
+function resetPhases(){
+  Object.keys(pv).forEach(k=>pv[k]=0);
+  document.querySelectorAll('#view-phases .ob').forEach(b=>b.classList.remove('selected','sp2'));
+  document.querySelectorAll('#view-phases .opts').forEach(o=>{ const f=o.querySelector('.ob'); if(f)f.classList.add('selected','sp2'); });
+  updPhases();
+}
+updPhases();
+
+// ===== ELAPSS =====
+const ev={EE:0,EL:0,EA:0,EP:0,ES:0,ESH:0};
+const eids={EE:'ee-pts',EL:'el-pts',EA:'ea-pts',EP:'ep-pts',ES:'es-pts',ESH:'esh-pts'};
+function selE(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sp2'));
+  btn.classList.add('selected','sp2');
+  ev[k]=v; updElapss();
+}
+function updElapss(){
+  const t=Object.values(ev).reduce((a,b)=>a+b,0);
+  document.getElementById('elapss-score').textContent=t;
+  Object.entries(ev).forEach(([k,v])=>{ const e=document.getElementById(eids[k]); if(e)e.textContent=v+'点'; });
+  const r3=document.getElementById('elapss-risk3'), r5=document.getElementById('elapss-risk5');
+  const ie=document.getElementById('elapss-interp');
+  const sc=document.getElementById('elapss-score'); sc.className='snum';
+  r3.className='rpct'; r5.className='rpct';
+  // 6-category risk table (Backes et al. Neurology 2017)
+  const cats=[
+    {max:4, y3:'5%',   y5:'8.4%', cls:'c-low',   lbl:'低リスク',      range:'スコア &lt;5',  rec:'1〜2年ごとの画像フォローアップ'},
+    {max:9, y3:'7.8%', y5:'13%',  cls:'c-low',   lbl:'低〜中リスク',  range:'スコア 5–9',  rec:'1年ごとの画像フォローアップ'},
+    {max:14,y3:'11.7%',y5:'19.3%',cls:'c-mid',   lbl:'中リスク',      range:'スコア 10–14',rec:'6〜12ヵ月ごとの画像フォローアップ'},
+    {max:19,y3:'17.5%',y5:'28.1%',cls:'c-mid',   lbl:'中〜高リスク',  range:'スコア 15–19',rec:'6ヵ月ごとのフォローアップ / 治療を検討'},
+    {max:24,y3:'25.8%',y5:'39.9%',cls:'c-high',  lbl:'高リスク',      range:'スコア 20–24',rec:'短期フォローアップ / 治療を積極的に検討'},
+    {max:Infinity,y3:'42.7%',y5:'60.8%',cls:'c-vhigh',lbl:'非常に高リスク',range:'スコア ≥25',rec:'治療を強く推奨'},
+  ];
+  const c=cats.find(x=>t<=x.max);
+  r3.textContent=c.y3; r3.classList.add(c.cls);
+  r5.textContent=c.y5; r5.classList.add(c.cls);
+  sc.classList.add(c.cls);
+  ie.innerHTML=`<span style="font-weight:700">${c.lbl}</span>（${c.range}）`;
+}
+function resetElapss(){
+  Object.keys(ev).forEach(k=>ev[k]=0);
+  document.querySelectorAll('#view-elapss .ob').forEach(b=>b.classList.remove('selected','sp2'));
+  document.querySelectorAll('#view-elapss .opts').forEach(o=>{ const f=o.querySelector('.ob'); if(f)f.classList.add('selected','sp2'); });
+  updElapss();
+}
+updElapss();
+
+// ===== UCAS =====
+const us={size:0.36,sL:'3〜4 mm',loc:1.0,lL:'ICA/MCA/ACA/AcomA',shape:1.0,hL:'整形（smooth）'};
+function selU(k,v,lbl,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sp2'));
+  btn.classList.add('selected','sp2');
+  us[k]=v; us[k.charAt(0)+'L']=lbl; updUcas();
+}
+function updUcas(){
+  const r=us.size*us.loc*us.shape;
+  const rs=r<1?r.toFixed(2)+'%/y':r.toFixed(1)+'%/y';
+  const re=document.getElementById('ucas-rate'); re.textContent=rs;
+  document.getElementById('ucas-sl').textContent=us.sL;
+  document.getElementById('ucas-ll').textContent='×'+us.loc.toFixed(2);
+  document.getElementById('ucas-hl').textContent='×'+us.shape.toFixed(2);
+  const rp=document.getElementById('ucas-rp'), ri=document.getElementById('ucas-ri');
+  re.className='ucas-rate';
+  if(r<1){re.classList.add('c-low');rp.style.color='#38a169';rp.textContent='低リスク';ri.textContent='通常経過観察';}
+  else if(r<3){re.classList.add('c-mid');rp.style.color='#d69e2e';rp.textContent='中リスク';ri.textContent='治療を検討';}
+  else if(r<10){re.classList.add('c-high');rp.style.color='#e53e3e';rp.textContent='高リスク';ri.textContent='治療を積極的に検討';}
+  else{re.classList.add('c-vhigh');rp.style.color='#9b2335';rp.textContent='非常に高リスク';ri.textContent='治療を強く推奨';}
+  document.getElementById('ucas-bk').innerHTML=`基準：${us.size}%/y（${us.sL}）× 部位 HR ×${us.loc.toFixed(2)}（${us.lL}）× 形状 HR ×${us.shape.toFixed(2)}（${us.hL}）= <b>${rs}</b>`;
+}
+function resetUcas(){
+  us.size=0.36;us.sL='3〜4 mm';us.loc=1.0;us.lL='ICA/MCA/ACA/AcomA';us.shape=1.0;us.hL='整形（smooth）';
+  document.querySelectorAll('#view-ucas .ob').forEach(b=>b.classList.remove('selected','sp2'));
+  document.querySelectorAll('#view-ucas .opts').forEach(o=>{ const f=o.querySelector('.ob'); if(f)f.classList.add('selected','sp2'); });
+  updUcas();
+}
+updUcas();
+
+// ===== UIATS =====
+const ut={age:0,sah:0,fam:0,smk:0,eth:0,htn:0,pkd:0,drg:0,alc:0,cn:0,ms:0,em:0,ep:0,tsz:0,irr:0,rat:0,tloc:0,gr:0,dn:0,ql:0,ml:0,cl:0};
+const uc={cag:0,lif:0,nco:0,coa:0,psy:0,csz:0,cx:0};
+const UCONST=5;
+function togT(k,v,btn){
+  const sel=btn.classList.contains('sel-tx');
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('sel-tx','sel-cx'));
+  if(!sel){btn.classList.add('sel-tx');ut[k]=v;}else{ut[k]=0;}
+  updUIATS();
+}
+function togTck(k,v,btn){
+  if(btn.classList.contains('sel-tx')){btn.classList.remove('sel-tx');ut[k]=0;}
+  else{btn.classList.add('sel-tx');ut[k]=v;}
+  updUIATS();
+}
+function togC(k,v,btn){
+  const sel=btn.classList.contains('sel-cx');
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('sel-tx','sel-cx'));
+  if(!sel){btn.classList.add('sel-cx');uc[k]=v;}else{uc[k]=0;}
+  updUIATS();
+}
+function togCck(k,v,btn){
+  if(btn.classList.contains('sel-cx')){btn.classList.remove('sel-cx');uc[k]=0;}
+  else{btn.classList.add('sel-cx');uc[k]=v;}
+  updUIATS();
+}
+function updUIATS(){
+  const T=Object.values(ut).reduce((a,b)=>a+b,0);
+  const C=Object.values(uc).reduce((a,b)=>a+b,0)+UCONST;
+  document.getElementById('uiats-t').textContent=T;
+  document.getElementById('uiats-c').textContent=C;
+  // section pts
+  const sp=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v+'点';};
+  sp('ut-age',ut.age);
+  sp('ut-risk',ut.sah+ut.fam+ut.smk+ut.eth+ut.htn+ut.pkd+ut.drg+ut.alc);
+  sp('ut-sym',ut.cn+ut.ms+ut.em+ut.ep);
+  sp('ut-sz',ut.tsz);
+  sp('ut-mo',ut.irr+ut.rat);
+  sp('ut-lo',ut.tloc);
+  sp('ut-ot',ut.gr+ut.dn+ut.ql+ut.ml+ut.cl);
+  sp('uc-age',uc.cag);
+  sp('uc-sz',uc.csz);
+  sp('uc-co',uc.lif+uc.nco+uc.coa+uc.psy);
+  sp('uc-cx',uc.cx);
+  const diff=T-C;
+  const res=document.getElementById('uiats-res'), sub=document.getElementById('uiats-sub');
+  if(diff>=3){res.className='uia-res uia-treat';res.firstChild.textContent='▶ 治療を推奨';sub.textContent=`治療 +${T} vs 保存 +${C}（差 +${diff}）`;}
+  else if(diff<=-3){res.className='uia-res uia-cons';res.firstChild.textContent='▶ 経過観察を推奨';sub.textContent=`治療 +${T} vs 保存 +${C}（差 ${diff}）`;}
+  else{res.className='uia-res uia-inc';res.firstChild.textContent='▶ 判断保留（Inconclusive）';sub.textContent=`治療 +${T} vs 保存 +${C}（差 ${diff}）`;}
+}
+function resetUiats(){
+  Object.keys(ut).forEach(k=>ut[k]=0);
+  Object.keys(uc).forEach(k=>uc[k]=0);
+  document.querySelectorAll('#view-uiats .ob').forEach(b=>b.classList.remove('sel-tx','sel-cx'));
+  updUIATS();
+}
+updUIATS();
+
+// ===== Spetzler-Martin + Lawton-Young =====
+const smv={sz:null,el:null,vn:null};
+const lyv={lage:0,ldiff:0,lrupt:0};
+function selSM(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','st'));
+  btn.classList.add('selected','st');
+  smv[k]=v;
+  const labels={sz:'sm-sz-pts',el:'sm-el-pts',vn:'sm-vn-pts'};
+  const e=document.getElementById(labels[k]); if(e)e.textContent='+'+v+'点';
+  updSM();
+}
+function selLY(k,v,btn){
+  btn.closest('.opts').querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','st'));
+  btn.classList.add('selected','st');
+  lyv[k]=v;
+  const labels={lage:'ly-age-pts',ldiff:'ly-df-pts',lrupt:'ly-rp-pts'};
+  const e=document.getElementById(labels[k]); if(e)e.textContent=v+'点';
+  updSM();
+}
+function updSM(){
+  const lyTotal=lyv.lage+lyv.ldiff+lyv.lrupt;
+  document.getElementById('ly-score').textContent=lyTotal;
+  const lyPts=document.getElementById('ly-age-pts'); if(lyPts)lyPts.textContent=lyv.lage+'点';
+  const lyDf=document.getElementById('ly-df-pts'); if(lyDf)lyDf.textContent=lyv.ldiff+'点';
+  const lyRp=document.getElementById('ly-rp-pts'); if(lyRp)lyRp.textContent=lyv.lrupt+'点';
+
+  // component values
+  document.getElementById('sm-sz-val').textContent=smv.sz!==null?smv.sz:'—';
+  document.getElementById('sm-el-val').textContent=smv.el!==null?smv.el:'—';
+  document.getElementById('sm-vn-val').textContent=smv.vn!==null?smv.vn:'—';
+
+  document.getElementById('sm-sum').textContent=(smv.sz!==null&&smv.el!==null&&smv.vn!==null)?(smv.sz+smv.el+smv.vn):'—';
+
+  if(smv.sz===null||smv.el===null||smv.vn===null){
+    document.getElementById('sm-grade').textContent='—';
+    document.getElementById('sm-grade').style.color='#718096';
+    document.getElementById('sm-ponce').textContent='Spetzler-Ponce: —';
+    document.getElementById('sm-combined').textContent='—';
+    document.getElementById('sm-risk').textContent='—';
+    document.getElementById('sm-risk').style.color='#718096';
+    return;
+  }
+  const smGrade=smv.sz+smv.el+smv.vn;
+  const combined=smGrade+lyTotal;
+  const gEl=document.getElementById('sm-grade');
+  gEl.textContent='Grade '+smGrade;
+  const gColors=['','#38a169','#38a169','#d69e2e','#e53e3e','#9b2335'];
+  gEl.style.color=gColors[smGrade]||'#9b2335';
+
+  // Spetzler-Ponce
+  let ponce,ponceC;
+  if(smGrade<=2){ponce='Class A（Grade 1–2）';ponceC='#38a169';}
+  else if(smGrade===3){ponce='Class B（Grade 3）';ponceC='#d69e2e';}
+  else{ponce='Class C（Grade 4–5）';ponceC='#e53e3e';}
+  const pe=document.getElementById('sm-ponce');
+  pe.textContent='Spetzler-Ponce: '+ponce; pe.style.color=ponceC;
+
+  // Combined
+  document.getElementById('sm-combined').textContent=combined;
+  const re=document.getElementById('sm-risk');
+  if(combined<=3){re.textContent='低リスク';re.style.color='#38a169';}
+  else if(combined<=6){re.textContent='中等度';re.style.color='#d69e2e';}
+  else{re.textContent='高リスク';re.style.color='#e53e3e';}
+}
+function resetSM(){
+  smv.sz=null;smv.el=null;smv.vn=null;
+  lyv.lage=0;lyv.ldiff=0;lyv.lrupt=0;
+  document.querySelectorAll('#view-sm .ob').forEach(b=>b.classList.remove('selected','st'));
+  // re-select first option for LY sections
+  ['ly-age','ly-df','ly-rp'].forEach(()=>{});
+  document.querySelectorAll('#view-sm .sec:nth-child(n+5) .opts .ob:first-child').forEach(b=>b.classList.add('selected','st'));
+  ['sm-sz-pts','sm-el-pts','sm-vn-pts'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='未選択';});
+  ['sm-sz-val','sm-el-val','sm-vn-val','sm-sum'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  ['ly-age-pts','ly-df-pts','ly-rp-pts'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='0点';});
+  updSM();
+}
+updSM();
+
+// ===== HDS-R =====
+var hdv={h1:0,h2:0,h3:0,h4:0,h5:0,h6:0,h7:0,h8:0,h9:0};
+function selHD(key,val,el){
+  hdv[key]=val;
+  const sec=el.closest('.sec');
+  sec.querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sg'));
+  el.classList.add('selected','sg');
+  updHDSR();
+}
+function updHDSR(){
+  const total=Object.values(hdv).reduce((a,b)=>a+b,0);
+  document.getElementById('hdsr-total').textContent=total;
+  const keys=['h1','h2','h3','h4','h5','h6','h7','h8','h9'];
+  keys.forEach((k,i)=>{const e=document.getElementById('hd-'+(i+1)+'-p');if(e)e.textContent=hdv[k];});
+  const ti=document.getElementById('hdsr-total');
+  const in2=document.getElementById('hdsr-interp');
+  if(total<=20){
+    ti.className='snum c-high';
+    in2.textContent='認知症の疑い';in2.className='rpct c-high';
+  } else if(total<=23){
+    ti.className='snum c-mid';
+    in2.textContent='境界域';in2.className='rpct c-mid';
+  } else {
+    ti.className='snum c-low';
+    in2.textContent='正常範囲';in2.className='rpct c-low';
+  }
+}
+function resetHDSR(){
+  Object.keys(hdv).forEach(k=>hdv[k]=0);
+  document.querySelectorAll('#view-hdsr .ob').forEach(b=>b.classList.remove('selected','sg'));
+  document.querySelectorAll('#view-hdsr .opts .ob:first-child').forEach(b=>b.classList.add('selected','sg'));
+  updHDSR();
+}
+updHDSR();
+
+// ===== MMSE =====
+var mmv={m1:0,m2:0,m3:0,m4:0,m5:0,m6:0,m7:0,m8:0,m9:0,m10:0,m11:0};
+function selMM(key,val,el){
+  mmv[key]=val;
+  const sec=el.closest('.sec');
+  sec.querySelectorAll('.ob').forEach(b=>b.classList.remove('selected','sg'));
+  el.classList.add('selected','sg');
+  updMMSE();
+}
+function updMMSE(){
+  const total=Object.values(mmv).reduce((a,b)=>a+b,0);
+  document.getElementById('mmse-total').textContent=total;
+  const keys=['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10','m11'];
+  keys.forEach((k,i)=>{const e=document.getElementById('mm-'+(i+1)+'-p');if(e)e.textContent=mmv[k];});
+  const ti=document.getElementById('mmse-total');
+  const in2=document.getElementById('mmse-interp');
+  if(total<=23){
+    ti.className='snum c-high';
+    in2.textContent='認知症の疑い';in2.className='rpct c-high';
+  } else if(total<=27){
+    ti.className='snum c-mid';
+    in2.textContent='MCI の可能性';in2.className='rpct c-mid';
+  } else {
+    ti.className='snum c-low';
+    in2.textContent='正常範囲';in2.className='rpct c-low';
+  }
+}
+function resetMMSE(){
+  Object.keys(mmv).forEach(k=>mmv[k]=0);
+  document.querySelectorAll('#view-mmse .ob').forEach(b=>b.classList.remove('selected','sg'));
+  document.querySelectorAll('#view-mmse .opts .ob:first-child').forEach(b=>b.classList.add('selected','sg'));
+  updMMSE();
+}
+updMMSE();
+</script>
+</body>
+</html>
